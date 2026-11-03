@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --text: #37352f;
+    --muted: rgba(55, 53, 47, 0.65);
+    --faint: rgba(55, 53, 47, 0.45);
+    --line: rgba(55, 53, 47, 0.09);
+    --line-strong: rgba(55, 53, 47, 0.22);
+    --hover: rgba(55, 53, 47, 0.06);
+    --hover-soft: rgba(55, 53, 47, 0.03);
+    --pop: #ffffff;
+    --pop-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
+    /* The colors every gallery dashboard shares: coral, yellow, and green, plus the orchid that is this banner's background.
+       Headings, tags, and the diagram use only these, plus gray. The banner keeps its color in dark mode, so the drawing stays readable. */
+    --banner: #e4c3e6;
+    --c-coral: rgba(229, 130, 131, 0.42); --c-yellow: rgba(242, 228, 157, 0.5); --c-green: rgba(206, 231, 170, 0.5); --c-orchid: rgba(228, 195, 230, 0.6);
+    --c-gray: #f1f1ef;
+    --t-gray: rgba(227, 226, 224, 0.6); --f-gray: #32302c; --d-gray: #91918e;
+    --t-coral: rgba(229, 130, 131, 0.3); --f-coral: #6b2a2b; --d-coral: #d9686a;
+    --t-yellow: rgba(242, 228, 157, 0.65); --f-yellow: #5c4d12; --d-yellow: #cfb23a;
+    --t-green: rgba(206, 231, 170, 0.7); --f-green: #35501a; --d-green: #86b856;
+    --t-orchid: rgba(228, 195, 230, 0.65); --f-orchid: #4f2a52; --d-orchid: #b67cba;
+    /* The diagram */
+    --grid: rgba(55, 53, 47, 0.13);
+    --node: #ffffff;
+    --node-line: rgba(55, 53, 47, 0.3);
+    --outside: #f1f1ef;
+    --edge: rgba(55, 53, 47, 0.36);
+    --edge-hi: #37352f;
+    --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #191919;
+      --text: rgba(255, 255, 255, 0.81);
+      --muted: rgba(255, 255, 255, 0.5);
+      --faint: rgba(255, 255, 255, 0.3);
+      --line: rgba(255, 255, 255, 0.094);
+      --line-strong: rgba(255, 255, 255, 0.22);
+      --hover: rgba(255, 255, 255, 0.055);
+      --hover-soft: rgba(255, 255, 255, 0.03);
+      --pop: #252525;
+      --pop-shadow: rgba(255, 255, 255, 0.08) 0 0 0 1px, rgba(0, 0, 0, 0.3) 0 3px 6px, rgba(0, 0, 0, 0.45) 0 9px 24px;
+      --c-coral: rgba(229, 130, 131, 0.24); --c-yellow: rgba(242, 228, 157, 0.2); --c-green: rgba(206, 231, 170, 0.2); --c-orchid: rgba(228, 195, 230, 0.22);
+      --c-gray: #262626;
+      --t-gray: #3f4245;
+      --t-coral: rgba(229, 130, 131, 0.26); --t-yellow: rgba(242, 228, 157, 0.2); --t-green: rgba(206, 231, 170, 0.2); --t-orchid: rgba(228, 195, 230, 0.24);
+      --f-gray: rgba(255, 255, 255, 0.86);
+      --f-coral: var(--f-gray); --f-yellow: var(--f-gray); --f-green: var(--f-gray); --f-orchid: var(--f-gray);
+      --d-gray: #8f8f8f;
+      --d-coral: #e58283; --d-yellow: #f2e49d; --d-green: #cee7aa; --d-orchid: #e4c3e6;
+      --grid: rgba(255, 255, 255, 0.1);
+      --node: #202020;
+      --node-line: rgba(255, 255, 255, 0.28);
+      --outside: #2a2a2a;
+      --edge: rgba(255, 255, 255, 0.34);
+      --edge-hi: rgba(255, 255, 255, 0.86);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  ::selection { background: rgba(35, 131, 226, 0.28); }
+  [hidden] { display: none !important; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: 0; padding: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid rgba(35, 131, 226, 0.6); outline-offset: 1px; border-radius: 4px; }
+  .i { width: 14px; height: 14px; flex: none; }
+  .muted { color: var(--muted); }
+
+  /* Error notice: hidden unless the data can't load or the script fails */
+  .toast { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 32px); padding: 8px 12px; border-radius: 6px; background: var(--pop); box-shadow: var(--pop-shadow); color: var(--d-coral); font-size: 14px; }
+  .toast button { height: 26px; padding: 0 8px; border-radius: 4px; color: var(--text); }
+  .toast button:hover { background: var(--hover); }
+
+  /* Short Notion-style banner; the icon overlaps its bottom edge by half */
+  .banner { position: relative; height: clamp(150px, 16vw, 220px); overflow: hidden; background: var(--banner); }
+  .banner img { position: absolute; inset: 0; display: block; width: 92%; max-width: 1320px; height: 100%; margin-inline: auto; object-fit: cover; object-position: center 54%; }
+  .banner ~ .page .page-icon { position: relative; z-index: 1; margin-top: -52px; }
+
+  .page { max-width: 1400px; margin: 0 auto; padding: 0 72px 120px; }
+  .page-icon { display: block; width: 104px; height: 104px; margin: 44px 0 0 -4px; font-size: 88px; line-height: 104px; user-select: none; }
+  .title { margin: 18px 0 14px; font-size: 40px; font-weight: 700; line-height: 1.2; }
+  /* Header: name and goal on the left; on the right, a sticky note with what to say in Chat, pinned like the notes in the banner */
+  .head { display: grid; grid-template-columns: minmax(0, 66fr) minmax(0, 34fr); gap: 40px; align-items: start; margin: 0 0 30px; }
+  .head-main { min-width: 0; }
+  .callout.goal { display: inline-flex; max-width: 100%; }
+  .systems { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0 14px; }
+  .note { position: relative; margin-top: -4px; padding: 14px 16px 12px; border-radius: 4px; background: #fffaf0; color: #3d3a32; box-shadow: 0 0 0 1px rgba(60, 50, 20, 0.08), 0 6px 16px rgba(60, 50, 20, 0.1); }
+  .note::before { content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; border-radius: 50%; background: #d9686a; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transform: translateX(-50%); }
+  .note h3 { margin: 0 0 6px; color: rgba(55, 53, 47, 0.65); font-size: 12px; font-weight: 600; }
+  .note p { margin: 0; font-size: 14px; line-height: 1.4; }
+  .note p + p { margin-top: 6px; }
+  .note strong { font-weight: 600; }
+  .note span { color: rgba(55, 53, 47, 0.65); }
+  .columns { display: grid; grid-template-columns: minmax(0, 66fr) minmax(0, 34fr); gap: 40px; align-items: start; }
+  .col { min-width: 0; }
+  .section + .section { margin-top: 44px; }
+
+  /* Callouts */
+  .callout { display: flex; align-items: center; gap: 10px; padding: 12px 16px 12px 14px; border-radius: 6px; background: var(--c-gray); }
+  .callout.coral { background: var(--c-coral); }
+  .callout.yellow { background: var(--c-yellow); }
+  .callout.green { background: var(--c-green); }
+  .callout.orchid { background: var(--c-orchid); }
+  .callout h2 { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; }
+  .callout p { margin: 0; }
+  .emoji { width: 22px; flex: none; font-size: 18px; line-height: 1; text-align: center; }
+  .empty { margin: 10px 2px 6px; color: var(--muted); font-size: 14px; }
+
+  /* Tags */
+  .tag { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; height: 20px; padding: 0 6px; border-radius: 3px; background: var(--tb); color: var(--tf); font-size: 12px; line-height: 20px; white-space: nowrap; }
+  .k-gray { --tb: var(--t-gray); --tf: var(--f-gray); --td: var(--d-gray); }
+  .k-coral { --tb: var(--t-coral); --tf: var(--f-coral); --td: var(--d-coral); }
+  .k-yellow { --tb: var(--t-yellow); --tf: var(--f-yellow); --td: var(--d-yellow); }
+  .k-green { --tb: var(--t-green); --tf: var(--f-green); --td: var(--d-green); }
+  .k-orchid { --tb: var(--t-orchid); --tf: var(--f-orchid); --td: var(--d-orchid); }
+  .link { border-bottom: 1px solid var(--line-strong); text-decoration: none; }
+  .link:hover { border-bottom-color: var(--text); }
+
+  /* Toolbar above the diagram: versions as tabs on the left, changes and the document on the right */
+  .dbbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; min-height: 36px; margin: 10px 0 8px; }
+  .bar-left, .bar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+  .tab { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 14px; font-size: 14px; color: var(--muted); white-space: nowrap; text-decoration: none; }
+  .tab:hover { background: var(--hover); }
+  .tab[aria-selected="true"] { background: var(--hover); color: var(--text); font-weight: 600; }
+  .legend { display: flex; gap: 4px; margin-right: 4px; }
+  .switch { position: relative; width: 26px; height: 15px; flex: none; border-radius: 8px; background: var(--line-strong); transition: background 0.15s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.15s; }
+  [aria-pressed="true"] .switch { background: var(--d-orchid); }
+  [aria-pressed="true"] .switch::after { transform: translateX(11px); }
+
+  /* The diagram: modules in rows, each above what it depends on, on dotted paper */
+  .frame { position: relative; display: flex; justify-content: center; overflow-x: auto; padding: 22px 16px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line); background-color: var(--bg); background-image: radial-gradient(var(--grid) 1px, transparent 1.2px); background-size: 18px 18px; background-position: 9px 9px; }
+  .frame svg { display: block; flex: none; height: auto; overflow: visible; }
+  .frame .empty { margin: 40px 0; }
+  .node { cursor: pointer; outline: none; }
+  .node rect.box { fill: var(--node); }
+  .node rect.line { fill: none; stroke: var(--node-line); stroke-width: 1.2; }
+  .node .bar { fill: var(--banner); }
+  .node.outside rect.box { fill: var(--outside); }
+  .node.outside rect.line { stroke-dasharray: 4 3; }
+  .node .nm { fill: var(--text); font-size: 14px; font-weight: 600; }
+  .node .sub { fill: var(--muted); font-family: var(--mono); font-size: 11.5px; }
+  .node.outside .sub { font-family: var(--sans); font-size: 12px; }
+  .node:hover rect.line { stroke: var(--edge-hi); }
+  .node:focus-visible rect.line { stroke: rgba(35, 131, 226, 0.8); stroke-width: 2; }
+  .node.new rect.box { fill: var(--t-green); }
+  .node.new rect.line { stroke: var(--d-green); }
+  .node.changed rect.box { fill: var(--t-yellow); }
+  .node.changed rect.line { stroke: var(--d-yellow); }
+  .node.removed rect.box { fill: var(--bg); }
+  .node.removed rect.line { stroke: var(--d-coral); stroke-dasharray: 5 4; }
+  .node.removed .bar { display: none; }
+  .node.removed .nm, .node.removed .sub { fill: var(--faint); text-decoration: line-through; }
+  .node.sel rect.line { stroke: var(--edge-hi); stroke-width: 2.2; }
+  .edge { fill: none; stroke: var(--edge); stroke-width: 1.4; }
+  .edge.new { stroke: var(--d-green); stroke-width: 1.8; }
+  .edge.removed { stroke: var(--d-coral); stroke-dasharray: 5 4; }
+  .edge.hi { stroke: var(--edge-hi); stroke-width: 2; }
+  .hit { fill: none; stroke: transparent; stroke-width: 12; }
+  .dim { opacity: 0.18; }
+  .arrow { fill: var(--edge); }
+  .arrow.new { fill: var(--d-green); }
+  .arrow.removed { fill: var(--d-coral); }
+  .arrow.hi { fill: var(--edge-hi); }
+  .elabel rect { fill: var(--pop); stroke: var(--line-strong); }
+  .elabel text { fill: var(--text); font-family: var(--mono); font-size: 11px; }
+  .caption { display: flex; gap: 8px; align-items: baseline; margin: 10px 2px 0; font-size: 14px; }
+  .caption b { flex: none; font-weight: 600; }
+  .caption code { flex: none; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+
+  /* Lists on the right */
+  .rows { margin-top: 8px; border-top: 1px solid var(--line); }
+  .row-item { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .row-item .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-item .date { flex: none; color: var(--faint); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .vrow { cursor: pointer; }
+  .vrow:hover { background: var(--hover-soft); }
+  .vrow.sel, .vrow.sel:hover { background: var(--hover); }
+  .vrow.sel .grow { font-weight: 600; }
+  .vtag { flex: none; min-width: 28px; justify-content: center; font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 1040px) {
+    .columns, .head { grid-template-columns: minmax(0, 1fr); }
+    .page { padding: 0 40px 96px; }
+  }
+  @media (max-width: 640px) {
+    .page { padding: 0 18px 80px; }
+    .title { font-size: 32px; }
+    .banner { height: clamp(96px, 24vw, 120px); }
+    .banner ~ .page .page-icon { width: 80px; height: 80px; margin-top: -40px; font-size: 68px; line-height: 80px; }
+  }
+</style>
+</head>
+<body>
+  <div class="toast" id="toast" hidden>
+    <span id="toast-text" role="status" aria-live="polite"></span>
+    <button type="button" id="toast-close" aria-label="Close" title="Close">×</button>
+  </div>
+
+  <section class="banner" aria-label="Illustration of an architect's desk with a lamp, blueprints, a laptop showing a diagram, building blocks, and drawing tools">
+    <img src="./assets/banner.png" width="2172" height="724" alt="" fetchpriority="high" decoding="async">
+  </section>
+
+  <main class="page">
+    <div class="page-icon" role="img" aria-label="Triangular ruler">📐</div>
+    <div class="head">
+      <div class="head-main">
+        <h1 class="title" id="name"></h1>
+        <div class="systems" id="systems" role="tablist" aria-label="Systems" hidden></div>
+        <div class="callout goal" id="goal"></div>
+      </div>
+      <aside class="note" id="start" aria-label="What to say in Chat"></aside>
+    </div>
+
+    <div class="columns">
+      <div class="col">
+        <section class="section" aria-labelledby="h-arch">
+          <div class="callout orchid"><span class="emoji" aria-hidden="true">🧩</span><h2 id="h-arch">Architecture</h2></div>
+          <div class="dbbar">
+            <div class="bar-left" id="tabs" role="tablist" aria-label="Versions"></div>
+            <div class="bar-right">
+              <div class="legend" id="legend"></div>
+              <button type="button" class="tab" id="changes" aria-pressed="true"><span class="switch" aria-hidden="true"></span>Changes</button>
+              <a class="tab" id="open-doc"></a>
+            </div>
+          </div>
+          <div class="frame" id="frame"></div>
+          <div class="caption" id="caption" hidden></div>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="section" aria-labelledby="h-versions">
+          <div class="callout yellow"><span class="emoji" aria-hidden="true">🕒</span><h2 id="h-versions">Versions</h2></div>
+          <div class="rows" id="versions"></div>
+        </section>
+
+        <section class="section" aria-labelledby="h-decisions">
+          <div class="callout coral"><span class="emoji" aria-hidden="true">📌</span><h2 id="h-decisions">Decisions</h2></div>
+          <div class="rows" id="decisions"></div>
+        </section>
+
+        <section class="section" aria-labelledby="h-open">
+          <div class="callout green"><span class="emoji" aria-hidden="true">❓</span><h2 id="h-open">Open questions</h2></div>
+          <div class="rows" id="open"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+<script>
+(() => {
+  "use strict";
+
+  // The dashboard is an index of the architecture documents. The Agent keeps a short version of each system in the data:
+  // every version's modules and what each one depends on. The page draws the diagram and works out what changed.
+  const DATA_PATH = "./assets/systems.json";
+  const KINDS = ["app", "module", "outside"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const CHANGE = {
+    new: { label: "New", k: "green" },
+    changed: { label: "Changed", k: "yellow" },
+    removed: { label: "Removed", k: "coral" },
+  };
+  const FILE_ICON = '<svg class="i" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2h5l3 3v9H4z M9 2v3h3"/></svg>';
+
+  // Diagram sizes, in SVG units
+  const NODE_H = 52;
+  const ROW_GAP = 58; // empty space between rows
+  const GAP = 28; // between two boxes in a row
+  const LANE = 14; // between an edge passing through a row and its neighbors
+  const PAD = 6;
+
+  const $ = (selector) => document.querySelector(selector);
+  const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const isObj = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const arr = (value) => (Array.isArray(value) ? value : []);
+  const str = (value) => (typeof value === "string" ? value : "");
+  const isDate = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const dateLabel = (s) => { if (!isDate(s)) return ""; const [, m, d] = s.split("-").map(Number); return `${MONTHS[m - 1]} ${d}`; };
+  const tag = (o) => `<span class="tag k-${o.k}">${esc(o.label)}</span>`;
+
+  function normalizeVersion(v, i) {
+    const modules = arr(v.modules).filter(isObj).map((m) => ({
+      ...m,
+      id: str(m.id),
+      name: str(m.name) || str(m.id),
+      kind: KINDS.includes(m.kind) ? m.kind : "module",
+      does: str(m.does),
+      sub: str(m.code) || str(m.role),
+    })).filter((m) => m.id);
+    const ids = new Set(modules.map((m) => m.id));
+    const seen = new Set();
+    const links = arr(v.links).filter(isObj).map((l) => ({ ...l, from: str(l.from), to: str(l.to), via: str(l.via) }))
+      .filter((l) => ids.has(l.from) && ids.has(l.to) && l.from !== l.to && !seen.has(`${l.from}>${l.to}`) && seen.add(`${l.from}>${l.to}`));
+    return { ...v, version: Number.isFinite(v.version) ? v.version : i + 1, date: str(v.date), change: str(v.change), why: str(v.why), modules, links };
+  }
+
+  function normalize(raw) {
+    const src = isObj(raw) ? raw : {};
+    const systems = arr(src.systems).filter(isObj).map((s) => ({
+      ...s,
+      id: str(s.id),
+      name: str(s.name) || str(s.id),
+      goal: str(s.goal),
+      versions: arr(s.versions).filter(isObj).map(normalizeVersion).sort((a, b) => a.version - b.version),
+      decisions: arr(s.decisions).filter(isObj).map((d) => ({ title: str(d.title), why: str(d.why) })).filter((d) => d.title),
+      openQuestions: arr(s.openQuestions).filter(isObj).map((q) => ({ title: str(q.title), detail: str(q.detail) })).filter((q) => q.title),
+    })).filter((s) => s.id);
+    return { ...src, example: src.example === true, systems };
+  }
+
+  let data = normalize({});
+  let systemId = null;
+  let versionIndex = -1; // -1 is the current version
+  let showChanges = true;
+  let selected = null;
+
+  const lastDate = (s) => s.versions[s.versions.length - 1]?.date || "";
+  const system = () => data.systems.find((s) => s.id === systemId) || null;
+  const currentIndex = (s) => s.versions.length - 1;
+  const viewIndex = (s) => (versionIndex < 0 || versionIndex > currentIndex(s) ? currentIndex(s) : versionIndex);
+  // The current version is architecture.md; each earlier one was saved to versions/ before the next was written.
+  const docHref = (s, i) => `systems/${encodeURIComponent(s.id)}/${i === currentIndex(s) ? "architecture.md" : `versions/v${s.versions[i].version}.md`}`;
+
+  function render() {
+    const s = system();
+    document.title = s ? s.name : "Architecture";
+    $("#name").textContent = s ? s.name : "Architecture";
+    $("#goal").innerHTML = s?.goal ? `<span class="emoji" aria-hidden="true">🎯</span><p><strong>Goal:</strong> ${esc(s.goal)}</p>` : "";
+    $("#goal").hidden = !s?.goal;
+    // Tabs for systems only when there's more than one
+    $("#systems").hidden = data.systems.length < 2;
+    $("#systems").innerHTML = data.systems.map((x) => `<button type="button" class="tab" role="tab" data-system="${esc(x.id)}" aria-selected="${x.id === systemId}">${esc(x.name)}</button>`).join("");
+    // "Set me up" only while the template's example is still here
+    const steps = [
+      data.example && ["Set me up.", "Swap this example for your own stack and system."],
+      ["Design a new system.", "Say what it does and who uses it."],
+      ["What if we add …?", "Talk it through; what you decide goes into the design."],
+    ].filter(Boolean);
+    $("#start").innerHTML = `<h3>Say in Chat</h3>${steps.map(([say, what]) => `<p><strong>“${esc(say)}”</strong> <span>${esc(what)}</span></p>`).join("")}`;
+    renderArchitecture();
+    renderVersions();
+    renderList("#decisions", s?.decisions || [], (d) => d.why, "None yet.");
+    renderList("#open", s?.openQuestions || [], (q) => q.detail, "Nothing open.");
+  }
+
+  /* ---------- What changed between two versions ---------- */
+
+  // A module is new if the earlier version didn't have it, and changed if what it does or what it depends on changed.
+  function compare(prev, cur) {
+    const status = new Map();
+    const links = new Map();
+    if (!prev) return { status, links, removedModules: [], removedLinks: [] };
+    const before = new Map(prev.modules.map((m) => [m.id, m]));
+    const outOf = (v, id) => v.links.filter((l) => l.from === id).map((l) => `${l.to}|${l.via}`).sort().join(",");
+    for (const m of cur.modules) {
+      const old = before.get(m.id);
+      if (!old) status.set(m.id, "new");
+      else if (old.does !== m.does || old.name !== m.name || old.kind !== m.kind || outOf(prev, m.id) !== outOf(cur, m.id)) status.set(m.id, "changed");
+    }
+    const key = (l) => `${l.from}>${l.to}`;
+    const prevLinks = new Set(prev.links.map(key));
+    const curLinks = new Set(cur.links.map(key));
+    for (const l of cur.links) if (!prevLinks.has(key(l))) links.set(key(l), "new");
+    const ids = new Set(cur.modules.map((m) => m.id));
+    const removedModules = prev.modules.filter((m) => !ids.has(m.id));
+    const removedLinks = prev.links.filter((l) => !curLinks.has(key(l)));
+    removedModules.forEach((m) => status.set(m.id, "removed"));
+    removedLinks.forEach((l) => links.set(key(l), "removed"));
+    return { status, links, removedModules, removedLinks };
+  }
+
+  /* ---------- Layout ---------- */
+
+  let measureCtx = null;
+  function textWidth(text, font) {
+    measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
+    measureCtx.font = font;
+    return measureCtx.measureText(text).width;
+  }
+
+  // Places items in a row, in order, as close to where they want to be as their widths allow (least squares, by pooling neighbors).
+  function placeRow(items, want, gapOf) {
+    const offset = [0];
+    for (let i = 1; i < items.length; i++) offset[i] = offset[i - 1] + gapOf(items[i - 1], items[i]);
+    const blocks = [];
+    items.forEach((_, i) => {
+      let b = { sum: want[i] - offset[i], n: 1 };
+      while (blocks.length && blocks[blocks.length - 1].sum / blocks[blocks.length - 1].n > b.sum / b.n) {
+        const p = blocks.pop();
+        b = { sum: p.sum + b.sum, n: p.n + b.n };
+      }
+      blocks.push(b);
+    });
+    const out = [];
+    blocks.forEach((b) => { for (let k = 0; k < b.n; k++) out.push(b.sum / b.n + offset[out.length]); });
+    return out;
+  }
+
+  // Layered layout: each module sits above everything it depends on, apps on the top row, outside services on the bottom row.
+  // Links that skip rows pass through the rows in between, so they run between boxes instead of across them.
+  function layout(modules, links) {
+    const fontName = `600 14px ${getComputedStyle(document.body).fontFamily}`;
+    const nodes = modules.map((m) => {
+      const w = Math.max(textWidth(m.name, fontName), textWidth(m.sub, m.kind === "outside" ? `12px ${getComputedStyle(document.body).fontFamily}` : "11.5px ui-monospace, SFMono-Regular, Menlo, monospace"));
+      return { ...m, w: Math.max(112, Math.ceil(w) + 30), h: NODE_H, dummy: false };
+    });
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const deps = new Map(nodes.map((n) => [n.id, []]));
+    links.forEach((l) => deps.get(l.from).push(l.to));
+
+    // Height: the longest chain of dependencies below a module. A loop is cut where it closes.
+    const hasOutside = nodes.some((n) => n.kind === "outside");
+    const height = new Map();
+    const open = new Set();
+    const heightOf = (id) => {
+      if (height.has(id)) return height.get(id);
+      open.add(id);
+      const n = byId.get(id);
+      let h = n.kind === "outside" ? 0 : hasOutside ? 1 : 0;
+      if (n.kind !== "outside") for (const t of deps.get(id)) if (!open.has(t)) h = Math.max(h, heightOf(t) + 1);
+      open.delete(id);
+      height.set(id, h);
+      return h;
+    };
+    nodes.forEach((n) => heightOf(n.id));
+    const apps = nodes.filter((n) => n.kind === "app");
+    if (apps.length) {
+      const top = Math.max(1 + Math.max(-1, ...nodes.filter((n) => n.kind !== "app").map((n) => height.get(n.id))), ...apps.map((n) => height.get(n.id)));
+      apps.forEach((n) => height.set(n.id, top));
+    }
+    const top = Math.max(0, ...nodes.map((n) => height.get(n.id)));
+    const rows = Array.from({ length: top + 1 }, () => []);
+    nodes.forEach((n) => { n.row = top - height.get(n.id); rows[n.row].push(n); });
+
+    // Split links that skip rows into a chain through placeholder points, one per row skipped.
+    const segs = [];
+    const routes = links.map((l) => {
+      const a = byId.get(l.from), b = byId.get(l.to);
+      const chain = [a];
+      if (b.row > a.row) {
+        for (let r = a.row + 1; r < b.row; r++) {
+          const d = { id: `${l.from}>${l.to}@${r}`, dummy: true, w: 0, row: r };
+          rows[r].push(d);
+          chain.push(d);
+        }
+      }
+      chain.push(b);
+      if (b.row > a.row) for (let i = 0; i + 1 < chain.length; i++) segs.push([chain[i], chain[i + 1]]);
+      return { link: l, chain, down: b.row > a.row };
+    });
+    const up = new Map(), down = new Map();
+    const push = (m, k, v) => (m.get(k) || m.set(k, []).get(k)).push(v);
+    segs.forEach(([a, b]) => { push(down, a, b); push(up, b, a); });
+
+    // Order each row to cut crossings: sort by the average position of neighbors, sweeping down and up, keep the best.
+    const crossings = () => {
+      let c = 0;
+      const pos = new Map();
+      rows.forEach((row) => row.forEach((n, i) => pos.set(n, i)));
+      for (let r = 0; r + 1 < rows.length; r++) {
+        const s = segs.filter(([a]) => a.row === r).map(([a, b]) => [pos.get(a), pos.get(b)]);
+        for (let i = 0; i < s.length; i++) for (let j = i + 1; j < s.length; j++) if ((s[i][0] - s[j][0]) * (s[i][1] - s[j][1]) < 0) c++;
+      }
+      return c;
+    };
+    let best = rows.map((row) => row.slice());
+    let bestC = crossings();
+    for (let it = 0; it < 12 && bestC > 0; it++) {
+      const goingDown = it % 2 === 0;
+      const order = goingDown ? rows.map((_, r) => r).slice(1) : rows.map((_, r) => r).slice(0, -1).reverse();
+      for (const r of order) {
+        const ref = new Map(rows[goingDown ? r - 1 : r + 1].map((n, i) => [n, i]));
+        const bary = new Map(rows[r].map((n, i) => {
+          const ns = (goingDown ? up : down).get(n) || [];
+          return [n, ns.length ? ns.reduce((s, x) => s + ref.get(x), 0) / ns.length : i];
+        }));
+        rows[r].sort((a, b) => bary.get(a) - bary.get(b));
+      }
+      const c = crossings();
+      if (c < bestC) { bestC = c; best = rows.map((row) => row.slice()); }
+    }
+    best.forEach((row, r) => { rows[r] = row; });
+
+    // Horizontal positions: start packed, then pull each item toward its neighbors in the rows above and below.
+    const gapOf = (a, b) => (a.w + b.w) / 2 + (a.dummy || b.dummy ? LANE : GAP);
+    rows.forEach((row) => {
+      let x = 0;
+      row.forEach((n, i) => { if (i) x += gapOf(row[i - 1], n); n.x = x; });
+      const mid = x / 2;
+      row.forEach((n) => { n.x -= mid; });
+    });
+    for (let it = 0; it < 24; it++) {
+      const order = it % 2 === 0 ? rows.map((_, r) => r) : rows.map((_, r) => r).reverse();
+      for (const r of order) {
+        const row = rows[r];
+        const want = row.map((n) => {
+          const ns = [...(up.get(n) || []), ...(down.get(n) || [])];
+          return ns.length ? ns.reduce((s, x) => s + x.x, 0) / ns.length : n.x;
+        });
+        placeRow(row, want, gapOf).forEach((x, i) => { row[i].x = x; });
+      }
+    }
+    const all = rows.flat();
+    const minX = Math.min(...all.map((n) => n.x - n.w / 2));
+    const maxX = Math.max(...all.map((n) => n.x + n.w / 2));
+    all.forEach((n) => { n.x += PAD - minX; n.y = PAD + n.row * (NODE_H + ROW_GAP) + NODE_H / 2; });
+
+    // Spread the links that leave the bottom of a box, and the ones that arrive at its top, so arrows don't pile up.
+    const exits = new Map(), entries = new Map();
+    routes.forEach((rt) => {
+      if (!rt.down) return;
+      push(exits, rt.chain[0], rt);
+      push(entries, rt.chain[rt.chain.length - 1], rt);
+    });
+    const spread = (map, side) => map.forEach((list, n) => {
+      const other = (rt) => (side === "out" ? rt.chain[1].x : rt.chain[rt.chain.length - 2].x);
+      list.sort((a, b) => other(a) - other(b));
+      const step = list.length > 1 ? Math.min(16, (n.w - 28) / (list.length - 1)) : 0;
+      list.forEach((rt, i) => { rt[side] = n.x + (i - (list.length - 1) / 2) * step; });
+    });
+    spread(exits, "out");
+    spread(entries, "in");
+
+    return { nodes, routes, width: maxX - minX + PAD * 2, height: PAD * 2 + rows.length * NODE_H + (rows.length - 1) * ROW_GAP };
+  }
+
+  // A smooth path down through the chain: straight through each row it passes, curving between rows.
+  function pathOf(rt) {
+    const c = rt.chain;
+    const a = c[0], b = c[c.length - 1];
+    if (!rt.down) {
+      // A link that points sideways or up, which only happens in a loop: arc around the right side.
+      const x1 = a.x + a.w / 2, y1 = a.y, x2 = b.x + b.w / 2, y2 = b.y;
+      const bulge = Math.max(40, Math.abs(y2 - y1) / 2);
+      return { d: `M${x1},${y1} C${x1 + bulge},${y1} ${x2 + bulge},${y2} ${x2 + 6},${y2}`, end: [x2 + 6, y2], angle: 180 };
+    }
+    const pts = [[rt.out, a.y + a.h / 2]];
+    for (let i = 1; i < c.length - 1; i++) pts.push([c[i].x, c[i].y - NODE_H / 2], [c[i].x, c[i].y + NODE_H / 2]);
+    const endY = b.y - b.h / 2 - 7; // leave room for the arrowhead
+    pts.push([rt.in, endY]);
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      if (x0 === x1 && i % 2 === 0) d += ` L${x1.toFixed(1)},${y1.toFixed(1)}`; // through a row
+      else { const m = (y0 + y1) / 2; d += ` C${x0.toFixed(1)},${m.toFixed(1)} ${x1.toFixed(1)},${m.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`; }
+    }
+    return { d, end: [rt.in, endY], angle: 90 };
+  }
+
+  /* ---------- Architecture ---------- */
+
+  function renderArchitecture() {
+    const s = system();
+    const frame = $("#frame");
+    if (!s || !s.versions.length) {
+      $("#tabs").innerHTML = "";
+      $("#legend").innerHTML = "";
+      $("#changes").hidden = true;
+      $("#open-doc").hidden = true;
+      $("#caption").hidden = true;
+      frame.innerHTML = '<p class="empty">No systems yet.</p>';
+      return;
+    }
+    const vi = viewIndex(s);
+    const cur = s.versions[vi];
+    const prev = vi > 0 ? s.versions[vi - 1] : null;
+    $("#tabs").innerHTML = s.versions.map((v, i) => `<button type="button" class="tab" role="tab" data-version="${i}" aria-selected="${i === vi}" title="${esc(v.change)}">v${v.version}</button>`).join("");
+    $("#changes").hidden = !prev;
+    $("#changes").setAttribute("aria-pressed", String(showChanges));
+    const link = $("#open-doc");
+    link.hidden = false;
+    link.href = docHref(s, vi);
+    link.innerHTML = `${FILE_ICON}Open v${cur.version}`;
+
+    const diff = showChanges && prev ? compare(prev, cur) : compare(null, cur);
+    const modules = [...cur.modules, ...diff.removedModules];
+    const links = [...cur.links, ...diff.removedLinks];
+    const present = new Set([...diff.status.values()]);
+    $("#legend").innerHTML = ["new", "changed", "removed"].filter((k) => present.has(k)).map((k) => tag(CHANGE[k])).join("");
+
+    if (!modules.length) {
+      frame.innerHTML = '<p class="empty">No modules yet.</p>';
+      $("#caption").hidden = true;
+      return;
+    }
+    const lay = layout(modules, links);
+    const byId = new Map(lay.nodes.map((n) => [n.id, n]));
+    if (selected && !byId.has(selected)) selected = null;
+    const near = new Set(selected ? [selected] : []);
+    if (selected) links.forEach((l) => { if (l.from === selected) near.add(l.to); if (l.to === selected) near.add(l.from); });
+    const linkKey = (l) => `${l.from}>${l.to}`;
+
+    const touches = (l) => Boolean(selected) && (l.from === selected || l.to === selected);
+    const edges = lay.routes.slice().sort((a, b) => touches(a.link) - touches(b.link)).map((rt) => {
+      const l = rt.link;
+      const state = diff.links.get(linkKey(l)) || "";
+      const hi = touches(l);
+      const cls = [state, hi ? "hi" : ""].filter(Boolean).join(" ");
+      const p = pathOf(rt);
+      const [ex, ey] = p.end;
+      const head = p.angle === 90 ? `${ex - 4.5},${ey} ${ex + 4.5},${ey} ${ex},${ey + 7}` : `${ex},${ey - 4.5} ${ex},${ey + 4.5} ${ex - 7},${ey}`;
+      const title = `${byId.get(l.from).name} → ${byId.get(l.to).name}${l.via ? ` · ${l.via}` : ""}`;
+      return `<g class="${selected && !hi ? "dim" : ""}"><title>${esc(title)}</title><path class="hit" d="${p.d}"/><path class="edge ${cls}" d="${p.d}"/><polygon class="arrow ${cls}" points="${head}"/></g>`;
+    });
+
+    const nodes = lay.nodes.map((n) => {
+      const state = diff.status.get(n.id) || "";
+      const cls = ["node", n.kind, state, n.id === selected ? "sel" : "", selected && !near.has(n.id) ? "dim" : ""].filter(Boolean).join(" ");
+      const tip = `${n.name}${n.does ? `: ${n.does}` : n.sub ? `: ${n.sub}` : ""}${state ? ` (${CHANGE[state].label.toLowerCase()} in v${cur.version})` : ""}`;
+      const x = n.x - n.w / 2, y = n.y - n.h / 2;
+      const bar = n.kind === "app" ? `<path class="bar" d="M0,8 a8,8 0 0 1 8,-8 h${n.w - 16} a8,8 0 0 1 8,8 v1 h${-n.w} z"/>` : "";
+      return `<g class="${cls}" data-id="${esc(n.id)}" tabindex="0" role="button" aria-pressed="${n.id === selected}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+        <title>${esc(tip)}</title>
+        <rect class="box" width="${n.w}" height="${n.h}" rx="8"/>${bar}<rect class="line" width="${n.w}" height="${n.h}" rx="8"/>
+        <text class="nm" x="${n.w / 2}" y="${n.sub ? 23 : 31}" text-anchor="middle">${esc(n.name)}</text>
+        ${n.sub ? `<text class="sub" x="${n.w / 2}" y="40" text-anchor="middle">${esc(n.sub)}</text>` : ""}
+      </g>`;
+    });
+
+    // Interface names for the selected module's links, next to the module on the other end
+    const labels = [];
+    if (selected) {
+      lay.routes.forEach((rt) => {
+        const l = rt.link;
+        if (!rt.down || !l.via || (l.from !== selected && l.to !== selected)) return;
+        const outgoing = l.from === selected;
+        const other = byId.get(outgoing ? l.to : l.from);
+        const w = Math.ceil(textWidth(l.via, "11px ui-monospace, SFMono-Regular, Menlo, monospace")) + 12;
+        labels.push({ text: l.via, w, x: outgoing ? rt.in : rt.out, y: outgoing ? other.y - other.h / 2 - 18 : other.y + other.h / 2 + 13 });
+      });
+      const byY = new Map();
+      labels.forEach((lb) => push2(byY, Math.round(lb.y), lb));
+      byY.forEach((list) => {
+        list.sort((a, b) => a.x - b.x);
+        placeRow(list, list.map((lb) => lb.x), (a, b) => (a.w + b.w) / 2 + 6).forEach((x, i) => { list[i].x = x; });
+      });
+    }
+    const labelSvg = labels.map((lb) => `<g class="elabel"><rect x="${(lb.x - lb.w / 2).toFixed(1)}" y="${(lb.y - 9).toFixed(1)}" width="${lb.w}" height="18" rx="4"/><text x="${lb.x.toFixed(1)}" y="${(lb.y + 3.5).toFixed(1)}" text-anchor="middle">${esc(lb.text)}</text></g>`).join("");
+
+    frame.innerHTML = `<svg viewBox="0 0 ${lay.width.toFixed(1)} ${lay.height.toFixed(1)}" width="${lay.width.toFixed(0)}" role="img" aria-label="Architecture of ${esc(s.name)}, version ${cur.version}">
+      <g>${edges.join("")}</g><g>${nodes.join("")}</g><g>${labelSvg}</g>
+    </svg>`;
+    fit();
+
+    const n = selected && byId.get(selected);
+    $("#caption").hidden = !n;
+    if (n) $("#caption").innerHTML = `<b>${esc(n.name)}</b>${n.kind !== "outside" && n.sub ? `<code>${esc(n.sub)}</code>` : ""}<span class="muted">${esc(n.does || n.sub)}</span>`;
+  }
+  function push2(m, k, v) { (m.get(k) || m.set(k, []).get(k)).push(v); }
+
+  // Show the diagram at its own size; shrink it to fit the column, but not below three quarters, then scroll.
+  function fit() {
+    const svg = $("#frame svg");
+    if (!svg) return;
+    const natural = Number(svg.getAttribute("width"));
+    const room = $("#frame").clientWidth - 32;
+    svg.style.width = `${Math.max(natural * 0.75, Math.min(natural, room))}px`;
+  }
+
+  /* ---------- Lists ---------- */
+
+  function renderVersions() {
+    const s = system();
+    if (!s || !s.versions.length) { $("#versions").innerHTML = '<p class="empty">No versions yet.</p>'; return; }
+    const vi = viewIndex(s);
+    $("#versions").innerHTML = s.versions.map((v, i) => ({ v, i })).reverse().map(({ v, i }) => `<div class="row-item vrow${i === vi ? " sel" : ""}" data-version="${i}" tabindex="0" title="${esc(v.why)}">
+        <span class="tag vtag k-${i === currentIndex(s) ? "orchid" : "gray"}">v${v.version}</span>
+        <span class="grow"><a class="link" href="${docHref(s, i)}">${esc(v.change || `Version ${v.version}`)}</a></span>
+        <span class="date">${esc(dateLabel(v.date))}</span>
+      </div>`).join("");
+  }
+
+  function renderList(target, items, detail, emptyText) {
+    $(target).innerHTML = items.map((it) => `<div class="row-item" title="${esc(detail(it))}"><span class="grow">${esc(it.title)}</span></div>`).join("")
+      || `<p class="empty">${emptyText}</p>`;
+  }
+
+  /* ---------- Events ---------- */
+
+  function selectVersion(i) {
+    const s = system();
+    if (!s) return;
+    versionIndex = i === currentIndex(s) ? -1 : i;
+    renderArchitecture();
+    renderVersions();
+  }
+  function toggleNode(id) {
+    selected = selected === id ? null : id;
+    renderArchitecture();
+  }
+
+  $("#tabs").addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-version]");
+    if (tab) selectVersion(Number(tab.dataset.version));
+  });
+  $("#versions").addEventListener("click", (event) => {
+    if (event.target.closest("a")) return;
+    const row = event.target.closest("[data-version]");
+    if (row) selectVersion(Number(row.dataset.version));
+  });
+  $("#systems").addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-system]");
+    if (!tab) return;
+    systemId = tab.dataset.system;
+    versionIndex = -1;
+    selected = null;
+    render();
+  });
+  $("#changes").addEventListener("click", () => {
+    showChanges = !showChanges;
+    renderArchitecture();
+  });
+  $("#frame").addEventListener("click", (event) => {
+    const node = event.target.closest(".node");
+    // The diagram is drawn again, so stop here: the page-wide handler below would see a detached target and clear it.
+    event.stopPropagation();
+    if (node) toggleNode(node.dataset.id);
+    else if (selected) toggleNode(selected);
+  });
+  document.addEventListener("click", (event) => {
+    if (!selected || !event.target.isConnected || event.target.closest(".dbbar, .caption, .vrow")) return;
+    toggleNode(selected);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && selected) return toggleNode(selected);
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const node = event.target.closest?.(".node");
+    const row = event.target.closest?.(".vrow");
+    if (node) { event.preventDefault(); toggleNode(node.dataset.id); $(`.node[data-id="${CSS.escape(node.dataset.id)}"]`)?.focus(); }
+    else if (row && event.target === row) { event.preventDefault(); selectVersion(Number(row.dataset.version)); }
+  });
+  if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe($("#frame"));
+
+  /* ---------- Start ---------- */
+
+  // There's no console in StashBase, so problems show at the bottom right, ready to pass on.
+  function showProblem(message) {
+    $("#toast-text").textContent = message;
+    $("#toast").hidden = false;
+  }
+  const lineOf = (stack) => /:(\d+):\d+\)?\s*$/m.exec(String(stack || "").split("\n")[1] || "")?.[1];
+  addEventListener("error", (event) => {
+    if (/ResizeObserver loop/i.test(event.message || "")) return;
+    const line = event.lineno || lineOf(event.error?.stack);
+    showProblem(`Page error: ${event.message || "unknown error"}${line ? ` (line ${line})` : ""}`);
+  });
+  addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    const line = lineOf(reason?.stack);
+    showProblem(`Page error: ${reason?.message || reason}${line ? ` (line ${line})` : ""}`);
+  });
+  $("#toast-close").addEventListener("click", () => {
+    $("#toast").hidden = true;
+  });
+
+  async function start() {
+    const api = window.stashbase?.data;
+    try {
+      // The page only reads. The Agent keeps the data current; StashBase reloads the page when it changes.
+      if (api && typeof api.load === "function") data = normalize(await api.load(DATA_PATH));
+      else {
+        const response = await fetch(DATA_PATH);
+        if (response.ok) data = normalize(await response.json());
+      }
+    } catch (error) {
+      showProblem(`Couldn't load the architecture data: ${error?.message || error}`);
+    }
+    // Open on the system worked on most recently
+    systemId = data.systems.slice().sort((a, b) => lastDate(b).localeCompare(lastDate(a)))[0]?.id || null;
+    render();
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>

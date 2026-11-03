@@ -20,10 +20,10 @@ My instructions will be short. When I give you a task, read the matching workflo
 
 | I say | Read first | You do in one go |
 | --- | --- | --- |
-| Set me up | [workflows/setup.md](workflows/setup.md) | Ask me a few questions and make this project mine |
-| Design a new system, with what it needs to do | [workflows/design.md](workflows/design.md) | Make its folder and write the first version of its architecture |
-| Ask, push back, or decide something about a design | [workflows/design.md](workflows/design.md#2-keep-it-current) | Answer, and update the architecture when something is decided |
-| Check the design | [workflows/design.md](workflows/design.md#3-check-the-design) | Check it against the goal and SOLID, and tell me what to fix |
+| Set me up | [workflows/setup.md](workflows/setup.md) | Ask me a few questions, make this project mine, and design my first system |
+| Design a new system, with what it needs to do | [workflows/design.md](workflows/design.md) | Make its folder, write the first version of its architecture, and add it to the dashboard |
+| Ask, push back, or decide something about a design | [workflows/design.md](workflows/design.md#2-keep-it-current) | Answer, and update the architecture and the dashboard when something is decided |
+| Check the design | [workflows/design.md](workflows/design.md#3-check-the-design) | Check it against the goal and SOLID, fix what you can, and tell me the rest |
 | Show me what changed, or go back to an old version | [workflows/versions.md](workflows/versions.md) | Compare the versions, or restore one |
 
 ## Design rules
@@ -38,5 +38,6 @@ Keep the design as simple as the goal allows. Every module and interface has to 
 * `architecture.md` is always the current design, whole and consistent. Old versions live in `versions/`, never in `architecture.md`.
 * Before a change that reshapes the design, save the current version first, and tell me in the same reply. See [versions.md](workflows/versions.md).
 * Never change or delete files in `versions/`.
+* The dashboard is `index.html`, and all of its data is in `assets/systems.json`. That JSON is the file you edit, as in [maintain.md](workflows/maintain.md). The page only shows the data, and you don't change `index.html` unless I ask.
 * When I give a preference that applies going forward, like a framework I always use, save it in [profile.md](context/profile.md).
 * Files hold only what's decided, never our discussion. Ideas still being discussed stay in Chat.

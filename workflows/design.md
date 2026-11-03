@@ -5,6 +5,8 @@ Everything for one system goes in `systems/<name>/`:
 * `architecture.md`: the current design. A coding agent should be able to build from it alone.
 * `versions/`: old versions, saved as `v1.md`, `v2.md`, and so on. See [versions.md](versions.md).
 
+The dashboard, `index.html`, draws each system from `assets/systems.json`. Whenever you write or change a design, bring that data in line last, as in [maintain.md](maintain.md).
+
 ## 1. Start a new system
 
 Make the system's folder. Then get these from me, from my message or the files I attach:
@@ -15,7 +17,7 @@ Make the system's folder. Then get these from me, from my message or the files I
 
 Without the goal and the main use cases there's nothing to design, so if either is missing, ask me, one question at a time. For anything else that's missing, make the simplest assumption and list it under Open questions.
 
-Then write `architecture.md` as version 1, in the [format](#format) below, and check it as in [step 3](#3-check-the-design). In Chat, tell me the design in a few sentences: the modules, the one decision that matters most, and what's still open.
+Then write `architecture.md` as version 1, in the [format](#format) below, check it as in [step 3](#3-check-the-design), and add the system to the dashboard's data. In Chat, tell me the design in a few sentences: the modules, the one decision that matters most, and what's still open.
 
 ## 2. Keep it current
 
@@ -25,7 +27,7 @@ Most of our work is talk. I ask why, suggest a change, push back, or change my m
 * When something is decided, because I say so or I agree with what you suggested, update `architecture.md` right away. If the change reshapes the design, follow [versions.md](versions.md) first.
 * Keep the whole document consistent. When a module changes, update every interface, flow, and decision that mentions it.
 * Write each decision under Decisions, with the reason and what we chose not to do.
-* After each update, tell me what changed in a line.
+* After each update, bring the dashboard's data in line, and tell me what changed in a line.
 
 ## 3. Check the design
 
@@ -34,6 +36,7 @@ Check the design every time you write or update it, and when I ask. Fix what you
 * **The goal:** walk through each main use case using only the modules and interfaces in the document. A step no module covers is a gap.
 * **SOLID:** follow the rules [below](#solid).
 * **Buildable:** a coding agent could build each module without asking. Every name, interface, and dependency is spelled out.
+* **The dashboard:** when I ask for a check, also compare the dashboard's data with the document, as in [maintain.md](maintain.md).
 
 When I ask for something that breaks a rule, tell me what it will cost in a sentence, and suggest a fix. If I still want it, do it, and write it under Decisions with my reason.
 
@@ -69,10 +72,12 @@ What the system does, for whom, and what it leaves out.
 Stack, scale, team, deadlines, and systems it has to work with. Only what I've said, plus assumptions marked as such.
 
 ## Modules
+One entry for each app people use and each part of the system we build. Outside services and databases go in Constraints, not here.
+
 ### <Module>
 * **Does:** its one responsibility.
 * **Owns:** the data only it writes.
-* **Depends on:** other modules' interfaces, by name.
+* **Depends on:** the interfaces it uses, by name. An app names what it calls, like "Web API, over HTTP".
 * **Code:** where it lives, like `src/booking/`.
 
 ## Interfaces
@@ -82,10 +87,10 @@ The contracts between modules, as code in the project's language: names, inputs,
 Each main use case, step by step: which module does what, through which interface.
 
 ## Decisions
-* **<Decision>:** why, and what we chose not to do.
+* **<Decision>:** why. Not chosen: what we decided against.
 
 ## Open questions
-What's not decided yet, and the assumptions we're working with.
+* **<Question>:** what's not decided yet, and the assumption we're working with until it is.
 
 ## Versions
 | Version | Date | What changed | Why |

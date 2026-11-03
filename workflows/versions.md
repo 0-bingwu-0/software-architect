@@ -20,6 +20,7 @@ One decision is one version, even if it touches several modules. Several decisio
 1. Tell me first, at the start of your reply, in a sentence: what's changing, and the version you're saving. Like: "This splits Booking into Booking and Scheduling, so I'm saving the current design as v2." Don't wait for my OK.
 2. Copy `architecture.md` as it is to `versions/v<N>.md`, where N is its current version number.
 3. Update `architecture.md`. At the top, change the version to N+1 and the date to today. Add a row to the Versions table: what changed and why, a line each.
+4. Add the new version to the dashboard's data, as in [maintain.md](maintain.md).
 
 The first version needs no copy. Write version 1 with one row in the table: "First design."
 
@@ -33,5 +34,6 @@ When I ask to go back to an old version:
 
 1. Save the current version first, as above, so nothing is lost.
 2. Copy the old version into `architecture.md` under the next version number, not its old one. Keep the full Versions table, and add a row like "Back to v2", with my reason.
+3. Add it to the dashboard's data as a new version, as in [maintain.md](maintain.md).
 
 Never change or delete a file in `versions/`.

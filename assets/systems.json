@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "example": true,
+  "systems": [
+    {
+      "id": "clinic-booking",
+      "name": "Clinic Booking",
+      "goal": "Patients book visits online, the front desk runs each clinician's day, and a reminder goes out the day before each visit.",
+      "versions": [
+        {
+          "version": 1,
+          "date": "2026-10-20",
+          "change": "First design",
+          "why": "",
+          "modules": [
+            {"id": "front-desk", "name": "Front desk app", "kind": "app", "does": "Where staff see each clinician's day, book and move visits, and set hours.", "code": "web/front-desk/"},
+            {"id": "booking-page", "name": "Booking page", "kind": "app", "does": "Where patients pick a free slot and book a visit.", "code": "web/booking-page/"},
+            {"id": "web-api", "name": "Web API", "kind": "module", "does": "Serves both apps over HTTP, finds the clinic from the subdomain, and turns each request into one module call.", "code": "src/api/"},
+            {"id": "booking", "name": "Booking", "kind": "module", "does": "Creates, moves, and cancels visits, rejects overlaps and times outside weekly hours, and keeps clinicians' hours.", "code": "src/booking/"},
+            {"id": "patients", "name": "Patients", "kind": "module", "does": "Keeps patients' contact details, and finds a returning patient by phone or email.", "code": "src/patients/"},
+            {"id": "postgres", "name": "PostgreSQL", "kind": "outside", "role": "Database"}
+          ],
+          "links": [
+            {"from": "front-desk", "to": "web-api", "via": "HTTP"},
+            {"from": "booking-page", "to": "web-api", "via": "HTTP"},
+            {"from": "web-api", "to": "booking", "via": "Bookings"},
+            {"from": "web-api", "to": "patients", "via": "PatientDirectory"},
+            {"from": "booking", "to": "postgres", "via": "BookingStore"},
+            {"from": "patients", "to": "postgres", "via": "PatientStore"}
+          ]
+        },
+        {
+          "version": 2,
+          "date": "2026-10-23",
+          "change": "Added text and email reminders",
+          "why": "Clinics lose about one visit in ten to no-shows, and reminders were the first thing they asked for.",
+          "modules": [
+            {"id": "front-desk", "name": "Front desk app", "kind": "app", "does": "Where staff see each clinician's day, book and move visits, and set hours.", "code": "web/front-desk/"},
+            {"id": "booking-page", "name": "Booking page", "kind": "app", "does": "Where patients pick a free slot and book a visit.", "code": "web/booking-page/"},
+            {"id": "web-api", "name": "Web API", "kind": "module", "does": "Serves both apps over HTTP, finds the clinic from the subdomain, and turns each request into one module call.", "code": "src/api/"},
+            {"id": "booking", "name": "Booking", "kind": "module", "does": "Creates, moves, and cancels visits, rejects overlaps and times outside weekly hours, keeps clinicians' hours, and announces each change.", "code": "src/booking/"},
+            {"id": "patients", "name": "Patients", "kind": "module", "does": "Keeps patients' contact details and how they want reminders: text, email, or none.", "code": "src/patients/"},
+            {"id": "reminders", "name": "Reminders", "kind": "module", "does": "Schedules a reminder 24 hours before each visit, keeps it in step with moves and cancellations, and sends due ones every minute.", "code": "src/reminders/"},
+            {"id": "notifications", "name": "Notifications", "kind": "module", "does": "Sends a message through the channel the patient chose, one channel per provider.", "code": "src/notifications/"},
+            {"id": "postgres", "name": "PostgreSQL", "kind": "outside", "role": "Database"},
+            {"id": "twilio", "name": "Twilio", "kind": "outside", "role": "Text messages"},
+            {"id": "postmark", "name": "Postmark", "kind": "outside", "role": "Email"}
+          ],
+          "links": [
+            {"from": "front-desk", "to": "web-api", "via": "HTTP"},
+            {"from": "booking-page", "to": "web-api", "via": "HTTP"},
+            {"from": "web-api", "to": "booking", "via": "Bookings"},
+            {"from": "web-api", "to": "patients", "via": "PatientDirectory"},
+            {"from": "booking", "to": "postgres", "via": "BookingStore"},
+            {"from": "patients", "to": "postgres", "via": "PatientStore"},
+            {"from": "reminders", "to": "booking", "via": "BookingEvents"},
+            {"from": "reminders", "to": "patients", "via": "ContactLookup"},
+            {"from": "reminders", "to": "notifications", "via": "Notifier"},
+            {"from": "reminders", "to": "postgres", "via": "ReminderStore"},
+            {"from": "notifications", "to": "twilio", "via": "MessageChannel"},
+            {"from": "notifications", "to": "postmark", "via": "MessageChannel"}
+          ]
+        },
+        {
+          "version": 3,
+          "date": "2026-10-28",
+          "change": "Split Availability out of Booking",
+          "why": "The front desk now blocks time off and changes hours every week, while booking rules rarely change. Two reasons to change, so two modules.",
+          "modules": [
+            {"id": "front-desk", "name": "Front desk app", "kind": "app", "does": "Where staff see each clinician's day, book and move visits, and set hours and time off.", "code": "web/front-desk/"},
+            {"id": "booking-page", "name": "Booking page", "kind": "app", "does": "Where patients pick a free slot and book a visit.", "code": "web/booking-page/"},
+            {"id": "web-api", "name": "Web API", "kind": "module", "does": "Serves both apps over HTTP, finds the clinic from the subdomain, and turns each request into one module call.", "code": "src/api/"},
+            {"id": "booking", "name": "Booking", "kind": "module", "does": "Creates, moves, and cancels visits, rejects overlaps and times outside open hours, and announces each change.", "code": "src/booking/"},
+            {"id": "availability", "name": "Availability", "kind": "module", "does": "Keeps clinicians' weekly hours and time off, and works out which hours are open on a day.", "code": "src/availability/"},
+            {"id": "patients", "name": "Patients", "kind": "module", "does": "Keeps patients' contact details and how they want reminders: text, email, or none.", "code": "src/patients/"},
+            {"id": "reminders", "name": "Reminders", "kind": "module", "does": "Schedules a reminder 24 hours before each visit, keeps it in step with moves and cancellations, and sends due ones every minute.", "code": "src/reminders/"},
+            {"id": "notifications", "name": "Notifications", "kind": "module", "does": "Sends a message through the channel the patient chose, one channel per provider.", "code": "src/notifications/"},
+            {"id": "postgres", "name": "PostgreSQL", "kind": "outside", "role": "Database"},
+            {"id": "twilio", "name": "Twilio", "kind": "outside", "role": "Text messages"},
+            {"id": "postmark", "name": "Postmark", "kind": "outside", "role": "Email"}
+          ],
+          "links": [
+            {"from": "front-desk", "to": "web-api", "via": "HTTP"},
+            {"from": "booking-page", "to": "web-api", "via": "HTTP"},
+            {"from": "web-api", "to": "booking", "via": "Bookings"},
+            {"from": "web-api", "to": "availability", "via": "Schedules"},
+            {"from": "web-api", "to": "patients", "via": "PatientDirectory"},
+            {"from": "booking", "to": "postgres", "via": "VisitStore"},
+            {"from": "patients", "to": "postgres", "via": "PatientStore"},
+            {"from": "reminders", "to": "booking", "via": "BookingEvents"},
+            {"from": "reminders", "to": "patients", "via": "ContactLookup"},
+            {"from": "reminders", "to": "notifications", "via": "Notifier"},
+            {"from": "reminders", "to": "postgres", "via": "ReminderStore"},
+            {"from": "notifications", "to": "twilio", "via": "MessageChannel"},
+            {"from": "notifications", "to": "postmark", "via": "MessageChannel"},
+            {"from": "booking", "to": "availability", "via": "OpenHours"},
+            {"from": "availability", "to": "postgres", "via": "ScheduleStore"}
+          ]
+        }
+      ],
+      "decisions": [
+        {"title": "One service, one folder per module", "why": "It's the house rule, and two engineers can't run more. Modules talk only through interfaces, so one could become a service later. Not chosen: separate services."},
+        {"title": "Each module owns its store interface", "why": "src/db/ implements the stores with Prisma, so business logic never imports Prisma and tests use in-memory stores. Not chosen: one shared repository layer."},
+        {"title": "Double bookings are stopped twice", "why": "Booking checks for overlaps, and a database constraint catches two bookings made at the same moment. Not chosen: a lock per clinician."},
+        {"title": "Times are stored in UTC", "why": "Weekly hours stay in local time and are turned into UTC per day, so daylight saving doesn't shift anyone's hours. Not chosen: storing local times."},
+        {"title": "Booking announces events instead of calling Reminders", "why": "Booking stays the same when something new reacts to visits, like a waitlist. Not chosen: Booking calling Reminders directly."},
+        {"title": "Reminders run from a table, not a queue", "why": "About 6,000 reminders a day fit in one table checked every minute, and moving a visit is one row update. Not chosen: a queue like SQS, one more thing to run."},
+        {"title": "One channel per provider", "why": "Clinics have already asked about WhatsApp. Adding it means one new channel and no change to Reminders. Not chosen: calling Twilio and Postmark from Reminders."},
+        {"title": "Availability is its own module", "why": "Hours and time off change every week; booking rules rarely do. Booking only reads open hours. Not chosen: keeping hours inside Booking, as in v2."}
+      ],
+      "openQuestions": [
+        {"title": "Patients moving their own visits", "detail": "Today they call the front desk. Online needs a link in the reminder and a way for patients to prove who they are."},
+        {"title": "Reminder timing", "detail": "Assumed one reminder, 24 hours before. Some clinics may want 48 hours, or a second one on the morning of the visit."},
+        {"title": "Clinicians at two clinics", "detail": "Assumed each clinician works at one clinic. If not, Availability needs hours per clinic."}
+      ]
+    }
+  ]
+}
