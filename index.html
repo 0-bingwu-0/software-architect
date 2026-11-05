@@ -19,7 +19,7 @@
     --pop-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
     /* The colors every gallery dashboard shares: coral, yellow, and green, plus the orchid that is this banner's background.
        Headings, tags, and the diagram use only these, plus gray. The banner keeps its color in dark mode, so the drawing stays readable. */
-    --banner: #e4c3e6;
+    --banner: #e6d1e6;
     --c-coral: rgba(229, 130, 131, 0.42); --c-yellow: rgba(242, 228, 157, 0.5); --c-green: rgba(206, 231, 170, 0.5); --c-orchid: rgba(228, 195, 230, 0.6);
     --c-gray: #f1f1ef;
     --t-gray: rgba(227, 226, 224, 0.6); --f-gray: #32302c; --d-gray: #91918e;
@@ -93,7 +93,10 @@
   .title { margin: 18px 0 10px; font-size: 40px; font-weight: 700; line-height: 1.2; }
   /* Header: the system's name, its tabs when there are several, what to say in Chat on one line, then the goal */
   .head { margin: 0 0 30px; }
-  .callout.goal { display: inline-flex; max-width: 100%; }
+  /* The goal reads as a subtitle: plain text, so it doesn't stack another gray block under the chips above */
+  .goal { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 15px; }
+  .goal .emoji { width: auto; font-size: 15px; }
+  .goal p { margin: 0; }
   .systems { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; }
   .say { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
   .say b { height: 24px; padding: 0 8px; border-radius: 4px; background: var(--hover); color: var(--text); font-weight: 500; line-height: 24px; white-space: nowrap; }
@@ -179,6 +182,10 @@
   .row-item { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 15px; }
   .row-item .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row-item .date { flex: none; color: var(--faint); font-size: 13px; font-variant-numeric: tabular-nums; }
+  /* Rows already have lines between them, so a name in a row shows its underline only on hover */
+  .row-item .link { border-bottom-color: transparent; }
+  .row-item .link:hover { border-bottom-color: var(--text); }
+  .row-item:has(.link):hover { background: var(--hover-soft); }
   .vrow { cursor: pointer; }
   .vrow:hover { background: var(--hover-soft); }
   .vrow.sel, .vrow.sel:hover { background: var(--hover); }
@@ -204,7 +211,7 @@
   </div>
 
   <section class="banner" aria-label="Illustration of an architect's desk with a lamp, blueprints, a laptop showing a diagram, building blocks, and drawing tools">
-    <img src="./assets/banner.png" width="2172" height="724" alt="" fetchpriority="high" decoding="async">
+    <img src="./assets/banner.svg" width="2172" height="724" alt="" fetchpriority="high" decoding="async">
   </section>
 
   <main class="page">
@@ -213,7 +220,7 @@
       <h1 class="title" id="name"></h1>
       <div class="systems" id="systems" role="tablist" aria-label="Systems" hidden></div>
       <p class="say" id="start"></p>
-      <div class="callout goal" id="goal"></div>
+      <div class="goal" id="goal"></div>
     </div>
 
     <div class="columns">
@@ -252,6 +259,7 @@
     </div>
   </main>
 
+<script src="./assets/dagre.min.js"></script>
 <script>
 (() => {
   "use strict";
@@ -308,8 +316,8 @@
       name: str(s.name) || str(s.id),
       goal: str(s.goal),
       versions: arr(s.versions).filter(isObj).map(normalizeVersion).sort((a, b) => a.version - b.version),
-      decisions: arr(s.decisions).filter(isObj).map((d) => ({ title: str(d.title), why: str(d.why) })).filter((d) => d.title),
-      openQuestions: arr(s.openQuestions).filter(isObj).map((q) => ({ title: str(q.title), detail: str(q.detail) })).filter((q) => q.title),
+      decisions: arr(s.decisions).filter(isObj).map((d) => ({ title: str(d.title) })).filter((d) => d.title),
+      openQuestions: arr(s.openQuestions).filter(isObj).map((q) => ({ title: str(q.title) })).filter((q) => q.title),
     })).filter((s) => s.id);
     return { ...src, example: src.example === true, systems };
   }
@@ -325,7 +333,7 @@
   const currentIndex = (s) => s.versions.length - 1;
   const viewIndex = (s) => (versionIndex < 0 || versionIndex > currentIndex(s) ? currentIndex(s) : versionIndex);
   // The current version is architecture.md; each earlier one was saved to versions/ before the next was written.
-  const docHref = (s, i) => `systems/${encodeURIComponent(s.id)}/${i === currentIndex(s) ? "architecture.md" : `versions/v${s.versions[i].version}.md`}`;
+  const docHref = (s, i) => `designs/${encodeURIComponent(s.id)}/${i === currentIndex(s) ? "architecture.md" : `versions/v${s.versions[i].version}.md`}`;
 
   function render() {
     const s = system();
@@ -341,8 +349,8 @@
     $("#start").innerHTML = `<span aria-hidden="true">💬</span><span>Say in Chat</span>${steps.map((say) => `<b>“${esc(say)}”</b>`).join("")}`;
     renderArchitecture();
     renderVersions();
-    renderList("#decisions", s?.decisions || [], (d) => d.why, "None yet.");
-    renderList("#open", s?.openQuestions || [], (q) => q.detail, "Nothing open.");
+    renderList("#decisions", s, s?.decisions || [], "None yet.");
+    renderList("#open", s, s?.openQuestions || [], "Nothing open.");
   }
 
   /* ---------- What changed between two versions ---------- */
@@ -398,155 +406,91 @@
     return out;
   }
 
-  // Layered layout: each module sits above everything it depends on, apps on the top row, outside services on the bottom row.
-  // Links that skip rows pass through the rows in between, so they run between boxes instead of across them.
+  // Where boxes go and how links run comes from dagre (github.com/dagrejs/dagre, MIT License), in assets/dagre.min.js:
+  // a layered layout that puts each module above what it depends on and keeps links from crossing.
+  // Two hidden anchors hold apps on the top row and outside services on the bottom row.
+  const ANCHOR_TOP = "\u0000top";
+  const ANCHOR_BOTTOM = "\u0000bottom";
   function layout(modules, links) {
-    const fontName = `600 14px ${getComputedStyle(document.body).fontFamily}`;
+    const family = getComputedStyle(document.body).fontFamily;
     const nodes = modules.map((m) => {
-      const w = Math.max(textWidth(m.name, fontName), textWidth(m.sub, m.kind === "outside" ? `12px ${getComputedStyle(document.body).fontFamily}` : "11.5px ui-monospace, SFMono-Regular, Menlo, monospace"));
-      return { ...m, w: Math.max(112, Math.ceil(w) + 30), h: NODE_H, dummy: false };
+      const w = Math.max(textWidth(m.name, `600 14px ${family}`), textWidth(m.sub, m.kind === "outside" ? `12px ${family}` : "11.5px ui-monospace, SFMono-Regular, Menlo, monospace"));
+      return { ...m, w: Math.max(112, Math.ceil(w) + 30), h: NODE_H };
     });
     const byId = new Map(nodes.map((n) => [n.id, n]));
-    const deps = new Map(nodes.map((n) => [n.id, []]));
-    links.forEach((l) => deps.get(l.from).push(l.to));
 
-    // Height: the longest chain of dependencies below a module. A loop is cut where it closes.
-    const hasOutside = nodes.some((n) => n.kind === "outside");
-    const height = new Map();
-    const open = new Set();
-    const heightOf = (id) => {
-      if (height.has(id)) return height.get(id);
-      open.add(id);
-      const n = byId.get(id);
-      let h = n.kind === "outside" ? 0 : hasOutside ? 1 : 0;
-      if (n.kind !== "outside") for (const t of deps.get(id)) if (!open.has(t)) h = Math.max(h, heightOf(t) + 1);
-      open.delete(id);
-      height.set(id, h);
-      return h;
-    };
-    nodes.forEach((n) => heightOf(n.id));
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({ rankdir: "TB", ranker: "tight-tree", nodesep: GAP, edgesep: LANE, ranksep: ROW_GAP, marginx: 0, marginy: 0 });
+    g.setDefaultEdgeLabel(() => ({}));
+    nodes.forEach((n) => g.setNode(n.id, { width: n.w, height: n.h }));
+    links.forEach((l) => g.setEdge(l.from, l.to, { weight: 1, minlen: 1 }));
     const apps = nodes.filter((n) => n.kind === "app");
+    const outside = nodes.filter((n) => n.kind === "outside");
     if (apps.length) {
-      const top = Math.max(1 + Math.max(-1, ...nodes.filter((n) => n.kind !== "app").map((n) => height.get(n.id))), ...apps.map((n) => height.get(n.id)));
-      apps.forEach((n) => height.set(n.id, top));
+      g.setNode(ANCHOR_TOP, { width: 0, height: 0 });
+      apps.forEach((n) => g.setEdge(ANCHOR_TOP, n.id, { weight: 20, minlen: 1 }));
     }
-    const top = Math.max(0, ...nodes.map((n) => height.get(n.id)));
-    const rows = Array.from({ length: top + 1 }, () => []);
-    nodes.forEach((n) => { n.row = top - height.get(n.id); rows[n.row].push(n); });
+    if (outside.length) {
+      g.setNode(ANCHOR_BOTTOM, { width: 0, height: 0 });
+      outside.forEach((n) => g.setEdge(n.id, ANCHOR_BOTTOM, { weight: 20, minlen: 1 }));
+    }
+    dagre.layout(g);
+    nodes.forEach((n) => { const p = g.node(n.id); n.x = p.x; n.y = p.y; });
 
-    // Split links that skip rows into a chain through placeholder points, one per row skipped.
-    const segs = [];
+    // Each link leaves its box on the side facing the other box and arrives the same way.
+    // Links sharing a side are spread across it in the order they head off, so arrows don't pile up.
     const routes = links.map((l) => {
       const a = byId.get(l.from), b = byId.get(l.to);
-      const chain = [a];
-      if (b.row > a.row) {
-        for (let r = a.row + 1; r < b.row; r++) {
-          const d = { id: `${l.from}>${l.to}@${r}`, dummy: true, w: 0, row: r };
-          rows[r].push(d);
-          chain.push(d);
-        }
-      }
-      chain.push(b);
-      if (b.row > a.row) for (let i = 0; i + 1 < chain.length; i++) segs.push([chain[i], chain[i + 1]]);
-      return { link: l, chain, down: b.row > a.row };
+      const mid = (g.edge(l.from, l.to)?.points || []).slice(1, -1).map((p) => [p.x, p.y]);
+      return { link: l, a, b, mid, down: b.y > a.y };
     });
-    const up = new Map(), down = new Map();
-    const push = (m, k, v) => (m.get(k) || m.set(k, []).get(k)).push(v);
-    segs.forEach(([a, b]) => { push(down, a, b); push(up, b, a); });
-
-    // Order each row to cut crossings: sort by the average position of neighbors, sweeping down and up, keep the best.
-    const crossings = () => {
-      let c = 0;
-      const pos = new Map();
-      rows.forEach((row) => row.forEach((n, i) => pos.set(n, i)));
-      for (let r = 0; r + 1 < rows.length; r++) {
-        const s = segs.filter(([a]) => a.row === r).map(([a, b]) => [pos.get(a), pos.get(b)]);
-        for (let i = 0; i < s.length; i++) for (let j = i + 1; j < s.length; j++) if ((s[i][0] - s[j][0]) * (s[i][1] - s[j][1]) < 0) c++;
-      }
-      return c;
-    };
-    let best = rows.map((row) => row.slice());
-    let bestC = crossings();
-    for (let it = 0; it < 12 && bestC > 0; it++) {
-      const goingDown = it % 2 === 0;
-      const order = goingDown ? rows.map((_, r) => r).slice(1) : rows.map((_, r) => r).slice(0, -1).reverse();
-      for (const r of order) {
-        const ref = new Map(rows[goingDown ? r - 1 : r + 1].map((n, i) => [n, i]));
-        const bary = new Map(rows[r].map((n, i) => {
-          const ns = (goingDown ? up : down).get(n) || [];
-          return [n, ns.length ? ns.reduce((s, x) => s + ref.get(x), 0) / ns.length : i];
-        }));
-        rows[r].sort((a, b) => bary.get(a) - bary.get(b));
-      }
-      const c = crossings();
-      if (c < bestC) { bestC = c; best = rows.map((row) => row.slice()); }
-    }
-    best.forEach((row, r) => { rows[r] = row; });
-
-    // Horizontal positions: start packed, then pull each item toward its neighbors in the rows above and below.
-    const gapOf = (a, b) => (a.w + b.w) / 2 + (a.dummy || b.dummy ? LANE : GAP);
-    rows.forEach((row) => {
-      let x = 0;
-      row.forEach((n, i) => { if (i) x += gapOf(row[i - 1], n); n.x = x; });
-      const mid = x / 2;
-      row.forEach((n) => { n.x -= mid; });
-    });
-    for (let it = 0; it < 24; it++) {
-      const order = it % 2 === 0 ? rows.map((_, r) => r) : rows.map((_, r) => r).reverse();
-      for (const r of order) {
-        const row = rows[r];
-        const want = row.map((n) => {
-          const ns = [...(up.get(n) || []), ...(down.get(n) || [])];
-          return ns.length ? ns.reduce((s, x) => s + x.x, 0) / ns.length : n.x;
-        });
-        placeRow(row, want, gapOf).forEach((x, i) => { row[i].x = x; });
-      }
-    }
-    const all = rows.flat();
-    const minX = Math.min(...all.map((n) => n.x - n.w / 2));
-    const maxX = Math.max(...all.map((n) => n.x + n.w / 2));
-    all.forEach((n) => { n.x += PAD - minX; n.y = PAD + n.row * (NODE_H + ROW_GAP) + NODE_H / 2; });
-
-    // Spread the links that leave the bottom of a box, and the ones that arrive at its top, so arrows don't pile up.
     const exits = new Map(), entries = new Map();
+    const push = (m, k, v) => (m.get(k) || m.set(k, []).get(k)).push(v);
     routes.forEach((rt) => {
-      if (!rt.down) return;
-      push(exits, rt.chain[0], rt);
-      push(entries, rt.chain[rt.chain.length - 1], rt);
+      push(exits, `${rt.a.id}|${rt.down}`, rt);
+      push(entries, `${rt.b.id}|${rt.down}`, rt);
     });
-    const spread = (map, side) => map.forEach((list, n) => {
-      const other = (rt) => (side === "out" ? rt.chain[1].x : rt.chain[rt.chain.length - 2].x);
-      list.sort((a, b) => other(a) - other(b));
+    const spread = (map, side) => map.forEach((list) => {
+      const n = side === "out" ? list[0].a : list[0].b;
+      const toward = (rt) => (side === "out" ? (rt.mid[0] || [rt.b.x])[0] : (rt.mid[rt.mid.length - 1] || [rt.a.x])[0]);
+      list.sort((p, q) => toward(p) - toward(q));
       const step = list.length > 1 ? Math.min(16, (n.w - 28) / (list.length - 1)) : 0;
       list.forEach((rt, i) => { rt[side] = n.x + (i - (list.length - 1) / 2) * step; });
     });
     spread(exits, "out");
     spread(entries, "in");
 
-    return { nodes, routes, width: maxX - minX + PAD * 2, height: PAD * 2 + rows.length * NODE_H + (rows.length - 1) * ROW_GAP };
+    // The points a link passes through: straight out of its box, past dagre's waypoints, and straight into the other box.
+    routes.forEach((rt) => {
+      const dir = rt.down ? 1 : -1;
+      const y0 = rt.a.y + dir * rt.a.h / 2;
+      const y1 = rt.b.y - dir * (rt.b.h / 2 + 7); // leave room for the arrowhead
+      rt.pts = [[rt.out, y0], [rt.out, y0 + dir * 14], ...rt.mid, [rt.in, y1 - dir * 14], [rt.in, y1]];
+    });
+
+    // Fit the drawing to the boxes and links; the hidden anchors don't count.
+    const xs = [], ys = [];
+    nodes.forEach((n) => { xs.push(n.x - n.w / 2, n.x + n.w / 2); ys.push(n.y - n.h / 2, n.y + n.h / 2); });
+    routes.forEach((rt) => rt.pts.forEach(([x, y]) => { xs.push(x); ys.push(y); }));
+    const dx = PAD - Math.min(...xs), dy = PAD - Math.min(...ys);
+    nodes.forEach((n) => { n.x += dx; n.y += dy; });
+    routes.forEach((rt) => {
+      rt.out += dx; rt.in += dx;
+      rt.pts = rt.pts.map(([x, y]) => [x + dx, y + dy]);
+    });
+    return { nodes, routes, width: Math.max(...xs) - Math.min(...xs) + PAD * 2, height: Math.max(...ys) - Math.min(...ys) + PAD * 2 };
   }
 
-  // A smooth path down through the chain: straight through each row it passes, curving between rows.
+  // A smooth curve through a link's points (a B-spline, as most diagram tools draw them), ending straight at the arrowhead.
   function pathOf(rt) {
-    const c = rt.chain;
-    const a = c[0], b = c[c.length - 1];
-    if (!rt.down) {
-      // A link that points sideways or up, which only happens in a loop: arc around the right side.
-      const x1 = a.x + a.w / 2, y1 = a.y, x2 = b.x + b.w / 2, y2 = b.y;
-      const bulge = Math.max(40, Math.abs(y2 - y1) / 2);
-      return { d: `M${x1},${y1} C${x1 + bulge},${y1} ${x2 + bulge},${y2} ${x2 + 6},${y2}`, end: [x2 + 6, y2], angle: 180 };
-    }
-    const pts = [[rt.out, a.y + a.h / 2]];
-    for (let i = 1; i < c.length - 1; i++) pts.push([c[i].x, c[i].y - NODE_H / 2], [c[i].x, c[i].y + NODE_H / 2]);
-    const endY = b.y - b.h / 2 - 7; // leave room for the arrowhead
-    pts.push([rt.in, endY]);
-    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-    for (let i = 1; i < pts.length; i++) {
-      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
-      if (x0 === x1 && i % 2 === 0) d += ` L${x1.toFixed(1)},${y1.toFixed(1)}`; // through a row
-      else { const m = (y0 + y1) / 2; d += ` C${x0.toFixed(1)},${m.toFixed(1)} ${x1.toFixed(1)},${m.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`; }
-    }
-    return { d, end: [rt.in, endY], angle: 90 };
+    const f = (x, y) => `${x.toFixed(1)},${y.toFixed(1)}`;
+    const seg = (x0, y0, x1, y1, x, y) => ` C${f((2 * x0 + x1) / 3, (2 * y0 + y1) / 3)} ${f((x0 + 2 * x1) / 3, (y0 + 2 * y1) / 3)} ${f((x0 + 4 * x1 + x) / 6, (y0 + 4 * y1 + y) / 6)}`;
+    const p = rt.pts;
+    let d = `M${f(...p[0])} L${f((5 * p[0][0] + p[1][0]) / 6, (5 * p[0][1] + p[1][1]) / 6)}`;
+    for (let i = 2; i < p.length; i++) d += seg(...p[i - 2], ...p[i - 1], ...p[i]);
+    const [xa, ya] = p[p.length - 2], [xb, yb] = p[p.length - 1];
+    d += seg(xa, ya, xb, yb, xb, yb) + ` L${f(xb, yb)}`;
+    return { d, end: [xb, yb], angle: rt.down ? 90 : -90 };
   }
 
   /* ---------- Architecture ---------- */
@@ -585,6 +529,12 @@
       $("#caption").hidden = true;
       return;
     }
+    if (typeof dagre === "undefined") {
+      frame.innerHTML = '<p class="empty">The diagram couldn\'t be drawn.</p>';
+      $("#caption").hidden = true;
+      showProblem("Couldn't load the diagram layout, assets/dagre.min.js.");
+      return;
+    }
     const lay = layout(modules, links);
     const byId = new Map(lay.nodes.map((n) => [n.id, n]));
     if (selected && !byId.has(selected)) selected = null;
@@ -600,7 +550,7 @@
       const cls = [state, hi ? "hi" : ""].filter(Boolean).join(" ");
       const p = pathOf(rt);
       const [ex, ey] = p.end;
-      const head = p.angle === 90 ? `${ex - 4.5},${ey} ${ex + 4.5},${ey} ${ex},${ey + 7}` : `${ex},${ey - 4.5} ${ex},${ey + 4.5} ${ex - 7},${ey}`;
+      const head = `${ex - 4.5},${ey} ${ex + 4.5},${ey} ${ex},${ey + (p.angle === 90 ? 7 : -7)}`;
       const title = `${byId.get(l.from).name} → ${byId.get(l.to).name}${l.via ? ` · ${l.via}` : ""}`;
       return `<g class="${selected && !hi ? "dim" : ""}"><title>${esc(title)}</title><path class="hit" d="${p.d}"/><path class="edge ${cls}" d="${p.d}"/><polygon class="arrow ${cls}" points="${head}"/></g>`;
     });
@@ -672,8 +622,13 @@
       </div>`).join("");
   }
 
-  function renderList(target, items, detail, emptyText) {
-    $(target).innerHTML = items.map((it) => `<div class="row-item" title="${esc(detail(it))}"><span class="grow">${esc(it.title)}</span></div>`).join("")
+  // The anchor StashBase gives a heading, by the same rule as its outline.
+  const headingSlug = (text) => text.trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/gu, "")
+    .replace(/[^\p{L}\p{N}_ -]/gu, "").trim().replace(/\s+/gu, "-") || "section";
+
+  // Each decision and open question is a heading in the current architecture.md, and opens there.
+  function renderList(target, s, items, emptyText) {
+    $(target).innerHTML = items.map((it) => `<div class="row-item"><span class="grow"><a class="link" href="${docHref(s, currentIndex(s))}#${encodeURIComponent(headingSlug(it.title))}" title="${esc(it.title)}">${esc(it.title)}</a></span></div>`).join("")
       || `<p class="empty">${emptyText}</p>`;
   }
 

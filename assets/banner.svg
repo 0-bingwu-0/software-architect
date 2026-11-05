@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2172 724" width="2172" height="724">
+  <!-- Line art on a transparent background: soft warm-gray strokes, objects in coral, yellow, green, and white.
+       An architect's desk, left to right: a lamp, rolled-up plans, a laptop showing a design, building blocks, a set square, a compass, and the documents.
+       Everything sits between y 230 and 520, inside the band the dashboard shows after cropping (about 195 to 555). -->
+  <g fill="none" stroke="#6b665f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 18)">
+
+    <!-- The line everything stands on -->
+    <path d="M 140 500 H 2050"/>
+
+    <!-- A desk lamp -->
+    <g>
+      <rect x="236" y="468" width="116" height="32" rx="8" fill="#f2e49d"/>
+      <path d="M 294 466 L 262 352 L 352 268"/>
+      <path d="M 352 268 L 448 296 C 440 326 418 350 386 360 Z" fill="#e58283"/>
+      <path d="M 398 344 C 418 334 432 318 438 300" stroke="#ffffff" stroke-width="5"/>
+      <circle cx="294" cy="466" r="9" fill="#ffffff"/>
+      <circle cx="262" cy="352" r="10" fill="#ffffff"/>
+      <circle cx="352" cy="268" r="10" fill="#ffffff"/>
+      <path d="M 468 334 L 486 344 M 446 374 L 458 390 M 414 394 L 420 414" stroke-width="4.5"/>
+    </g>
+
+    <!-- Rolled-up plans in a cup -->
+    <g>
+      <g transform="rotate(-12 530 400)">
+        <rect x="512" y="292" width="36" height="120" fill="#ffffff"/>
+        <ellipse cx="530" cy="292" rx="18" ry="7" fill="#ffffff"/>
+        <ellipse cx="530" cy="292" rx="6" ry="2.5" fill="#6b665f" stroke="none"/>
+      </g>
+      <rect x="560" y="252" width="38" height="160" fill="#f2e49d"/>
+      <ellipse cx="579" cy="252" rx="19" ry="7" fill="#f2e49d"/>
+      <ellipse cx="579" cy="252" rx="6" ry="2.5" fill="#6b665f" stroke="none"/>
+      <g transform="rotate(12 628 400)">
+        <rect x="610" y="300" width="36" height="112" fill="#ffffff"/>
+        <ellipse cx="628" cy="300" rx="18" ry="7" fill="#ffffff"/>
+        <ellipse cx="628" cy="300" rx="6" ry="2.5" fill="#6b665f" stroke="none"/>
+      </g>
+      <rect x="512" y="392" width="134" height="108" rx="10" fill="#cee7aa"/>
+      <path d="M 512 424 H 646" stroke-width="4.5"/>
+    </g>
+
+    <!-- A laptop showing the design: modules linked down to a database -->
+    <g>
+      <rect x="762" y="236" width="420" height="232" rx="16" fill="#ffffff"/>
+      <rect x="786" y="260" width="372" height="186" rx="6" fill="#fffaf0"/>
+      <path d="M 702 470 H 1242 L 1224 500 H 720 Z" fill="#ffffff"/>
+      <path d="M 932 480 H 1012" stroke-width="4.5"/>
+      <path d="M 934 316 L 875 348 M 1010 316 L 1069 348 M 875 382 L 948 410 M 1069 382 L 996 410" stroke-width="3.6"/>
+      <g stroke-width="3.6">
+        <rect x="916" y="282" width="112" height="34" rx="8" fill="#e58283"/>
+        <rect x="820" y="348" width="110" height="34" rx="8" fill="#f2e49d"/>
+        <rect x="1014" y="348" width="110" height="34" rx="8" fill="#cee7aa"/>
+        <path d="M 938 406 V 424 A 34 9 0 0 0 1006 424 V 406" fill="#ffffff"/>
+        <ellipse cx="972" cy="406" rx="34" ry="9" fill="#ffffff"/>
+      </g>
+    </g>
+
+    <!-- Building blocks -->
+    <g>
+      <rect x="1290" y="410" width="92" height="90" rx="8" fill="#f2e49d"/>
+      <rect x="1306" y="426" width="60" height="58" rx="4" stroke-width="4"/>
+      <rect x="1386" y="410" width="92" height="90" rx="8" fill="#cee7aa"/>
+      <rect x="1402" y="426" width="60" height="58" rx="4" stroke-width="4"/>
+      <rect x="1338" y="318" width="92" height="90" rx="8" fill="#e58283"/>
+      <rect x="1354" y="334" width="60" height="58" rx="4" stroke-width="4"/>
+    </g>
+
+    <!-- A set square -->
+    <g>
+      <path d="M 1540 500 V 296 L 1712 500 Z" fill="#f2e49d"/>
+      <path d="M 1570 468 V 382 L 1642 468 Z" fill="#ffffff" stroke-width="4.5"/>
+      <path d="M 1540 330 H 1556 M 1540 360 H 1550 M 1540 390 H 1556 M 1540 420 H 1550 M 1540 450 H 1556" stroke-width="3.6"/>
+    </g>
+
+    <!-- A compass -->
+    <g>
+      <path d="M 1760 306 L 1730 494 M 1772 306 L 1800 440"/>
+      <rect x="1759" y="250" width="14" height="34" rx="5" fill="#ffffff"/>
+      <circle cx="1766" cy="296" r="12" fill="#e58283"/>
+      <g transform="rotate(-11 1806 466)">
+        <rect x="1796" y="438" width="20" height="40" rx="4" fill="#cee7aa"/>
+        <path d="M 1796 478 L 1806 498 L 1816 478 Z" fill="#ffffff"/>
+      </g>
+    </g>
+
+    <!-- The documents: the design, with earlier versions behind it -->
+    <g>
+      <rect x="1906" y="276" width="120" height="224" rx="8" fill="#cee7aa"/>
+      <rect x="1886" y="294" width="120" height="206" rx="8" fill="#f2e49d"/>
+      <path d="M 1864 316 H 1952 L 1988 352 V 500 H 1864 Z" fill="#fffaf0"/>
+      <path d="M 1952 316 V 352 H 1988" stroke-width="4.5"/>
+      <path d="M 1884 386 H 1956 M 1884 414 H 1944 M 1884 442 H 1960 M 1884 470 H 1936" stroke-width="4"/>
+    </g>
+  </g>
+</svg>

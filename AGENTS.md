@@ -34,7 +34,7 @@ Keep the design as simple as the goal allows. Every module and interface has to 
 
 ## File rules
 
-* Each system gets its own folder in `systems/`, named in lowercase with hyphens, like `systems/clinic-booking`.
+* Each system gets its own folder in `designs/`, named in lowercase with hyphens, like `designs/clinic-booking`.
 * `architecture.md` is always the current design, whole and consistent. Old versions live in `versions/`, never in `architecture.md`.
 * Before a change that reshapes the design, save the current version first, and tell me in the same reply. See [versions.md](workflows/versions.md).
 * Never change or delete files in `versions/`.

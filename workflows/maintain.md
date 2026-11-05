@@ -22,7 +22,7 @@ Each version in the JSON holds its own copy of the modules and links, the way `v
 ## Editing rules
 
 * Keep it valid JSON. Change only what you need, and leave every other field as it is, including fields not listed here.
-* A system's `id` is its folder name in `systems/`. The dashboard opens `systems/<id>/architecture.md` for the current version and `systems/<id>/versions/v<N>.md` for earlier ones, so ids and version numbers must match the files.
+* A system's `id` is its folder name in `designs/`. The dashboard opens `designs/<id>/architecture.md` for the current version and `designs/<id>/versions/v<N>.md` for earlier ones, so ids and version numbers must match the files.
 * Don't change `schemaVersion` or `index.html`.
 * The file can hold up to 500 KB. If it gets close, tell me, and offer to keep only the last few versions of each system in it. The documents in `versions/` stay as they are.
 
@@ -46,8 +46,8 @@ Each version in the JSON holds its own copy of the modules and links, the way `v
       ],
       "links": [{ "from": "booking", "to": "postgres", "via": "VisitStore" }]
     }],
-    "decisions": [{ "title": "Availability is its own module", "why": "..." }],
-    "openQuestions": [{ "title": "Reminder timing", "detail": "..." }]
+    "decisions": [{ "title": "Availability is its own module" }],
+    "openQuestions": [{ "title": "Reminder timing" }]
   }]
 }
 ```
@@ -61,5 +61,4 @@ Each version in the JSON holds its own copy of the modules and links, the way `v
   * `does` is the module's Does line, shortened to one sentence. Change it only when what the module does changes, because the dashboard marks a module as changed when its `does` or its links change.
   * `code` is the Code line, for apps and modules. `role` is what an outside service is for, in a word or two, like "Database" or "Text messages".
 * `links` are the Depends on lines: a link from a module to each module or outside service it depends on, with `via` the interface it goes through. The link goes to the module that owns the interface. For an outside service, the link goes from the module that uses it, through the interface that wraps it, like `MessageChannel`. Apps link to what they call, with `via` like "HTTP". One link per pair: when a module uses two interfaces of another, put both in `via`, like "Bookings, BookingEvents".
-* `decisions` are the current document's Decisions: `title` is the bold part, and `why` is the rest, shortened to a sentence or two.
-* `openQuestions` are its Open questions, the same way: `title` and `detail`.
+* `decisions` and `openQuestions` list the current document's Decisions and Open questions, in order. `title` is the heading, word for word: the dashboard links each one to its heading in `architecture.md`, so a title that doesn't match the heading leads nowhere. The reasons stay in the document.

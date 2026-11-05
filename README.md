@@ -9,7 +9,7 @@ This project keeps the design in one document while you talk. AI works as your s
 Open this project in StashBase and tell the Agent:
 
 1. **"Set me up."** It asks you a few questions, one at a time: what you do, what you usually build with, any rules your designs follow, the language for your docs, and what you want to design first. Then it replaces the example with the first version of your design.
-2. **"Design an inventory app for a bike shop."** Say what it does, who uses it, and the few things they do most. It makes `systems/<name>/`, asks if the goal or the main use cases are missing, and writes the first version of `architecture.md`: modules, interfaces, key flows, and the decisions behind them.
+2. **"Design an inventory app for a bike shop."** Say what it does, who uses it, and the few things they do most. It makes `designs/<name>/`, asks if the goal or the main use cases are missing, and writes the first version of `architecture.md`: modules, interfaces, key flows, and the decisions behind them.
 3. **"What if we add online payments?"** Ask why, push back, change your mind. Each time something is decided, it updates `architecture.md`. If the change reshapes the design, it tells you and saves the current version to `versions/` first.
 4. **"What changed since v2?"** It tells you module by module, with the reasons. Changed your mind? Say "Go back to v2."
 
@@ -25,7 +25,7 @@ The architecture is all text, and you never have to open anything else. The dash
 
 * **Architecture:** every module, above what it depends on, down to the database and outside services. Click a module to see what it depends on, and through which interface. Switch versions to see what each one added, changed, or removed.
 * **Versions:** what changed in each version, and when. Each one opens its document.
-* **Decisions and open questions:** what's been decided, and what's still open. Hover over one for the reason.
+* **Decisions and open questions:** what's been decided, and what's still open. Each one opens its place in the architecture.
 
 ## Make it yours
 
@@ -46,7 +46,8 @@ Setup covers most of it. You can also change things anytime:
 * `workflows/design.md`: starting a system, keeping it current, checking it, and the format of `architecture.md`.
 * `workflows/versions.md`: when and how versions are saved, compared, and restored.
 * `workflows/maintain.md`: how the Agent keeps the dashboard in line with the architecture, and the format of its data.
-* `systems/`: one folder per system, with `architecture.md` and `versions/`. The example is in `systems/clinic-booking/`.
+* `designs/`: one folder per design, with `architecture.md` and `versions/`. The example is in `designs/clinic-booking/`.
 * `index.html`: the dashboard.
-* `assets/systems.json`: everything the dashboard shows, a short version of each system and its versions.
-* `assets/banner.png`: the dashboard's banner.
+* `assets/systems.json`: everything the dashboard shows, a short version of each design and its versions.
+* `assets/dagre.min.js`: lays out the diagram. It's [dagre](https://github.com/dagrejs/dagre), under the MIT License.
+* `assets/banner.svg`: the dashboard's banner.

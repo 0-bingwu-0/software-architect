@@ -1,6 +1,6 @@
 # Design the System
 
-Everything for one system goes in `systems/<name>/`:
+Everything for one system goes in `designs/<name>/`:
 
 * `architecture.md`: the current design. A coding agent should be able to build from it alone.
 * `versions/`: old versions, saved as `v1.md`, `v2.md`, and so on. See [versions.md](versions.md).
@@ -26,7 +26,7 @@ Most of our work is talk. I ask why, suggest a change, push back, or change my m
 * When I ask a question or think out loud, answer in Chat. Don't touch the file.
 * When something is decided, because I say so or I agree with what you suggested, update `architecture.md` right away. If the change reshapes the design, follow [versions.md](versions.md) first.
 * Keep the whole document consistent. When a module changes, update every interface, flow, and decision that mentions it.
-* Write each decision under Decisions, with the reason and what we chose not to do.
+* Write a decision under Decisions only when it shapes the structure, or when someone might undo it later without knowing why: the reason, and what we chose not to do. Smaller choices go where they apply, in a module or an interface. Open questions are the same: only what could change the structure.
 * After each update, bring the dashboard's data in line, and tell me what changed in a line.
 
 ## 3. Check the design
@@ -87,15 +87,21 @@ The contracts between modules, as code in the project's language: names, inputs,
 Each main use case, step by step: which module does what, through which interface.
 
 ## Decisions
-* **<Decision>:** why. Not chosen: what we decided against.
+
+### <Decision>
+Why. Not chosen: what we decided against.
 
 ## Open questions
-* **<Question>:** what's not decided yet, and the assumption we're working with until it is.
+
+### <Question>
+What's not decided yet, and the assumption we're working with until it is.
 
 ## Versions
 | Version | Date | What changed | Why |
 | --- | --- | --- | --- |
 ```
+
+Each decision and open question gets its own heading, so the dashboard can link straight to it. Keep the heading a short, plain title, without code formatting, and different from every other heading in the document.
 
 Write it so a coding agent can build from it without asking:
 

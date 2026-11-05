@@ -99,19 +99,15 @@
         }
       ],
       "decisions": [
-        {"title": "One service, one folder per module", "why": "It's the house rule, and two engineers can't run more. Modules talk only through interfaces, so one could become a service later. Not chosen: separate services."},
-        {"title": "Each module owns its store interface", "why": "src/db/ implements the stores with Prisma, so business logic never imports Prisma and tests use in-memory stores. Not chosen: one shared repository layer."},
-        {"title": "Double bookings are stopped twice", "why": "Booking checks for overlaps, and a database constraint catches two bookings made at the same moment. Not chosen: a lock per clinician."},
-        {"title": "Times are stored in UTC", "why": "Weekly hours stay in local time and are turned into UTC per day, so daylight saving doesn't shift anyone's hours. Not chosen: storing local times."},
-        {"title": "Booking announces events instead of calling Reminders", "why": "Booking stays the same when something new reacts to visits, like a waitlist. Not chosen: Booking calling Reminders directly."},
-        {"title": "Reminders run from a table, not a queue", "why": "About 6,000 reminders a day fit in one table checked every minute, and moving a visit is one row update. Not chosen: a queue like SQS, one more thing to run."},
-        {"title": "One channel per provider", "why": "Clinics have already asked about WhatsApp. Adding it means one new channel and no change to Reminders. Not chosen: calling Twilio and Postmark from Reminders."},
-        {"title": "Availability is its own module", "why": "Hours and time off change every week; booking rules rarely do. Booking only reads open hours. Not chosen: keeping hours inside Booking, as in v2."}
+        {"title": "One service, one folder per module"},
+        {"title": "Each module owns its store interface"},
+        {"title": "Booking announces events instead of calling Reminders"},
+        {"title": "Reminders run from a table, not a queue"},
+        {"title": "Availability is its own module"}
       ],
       "openQuestions": [
-        {"title": "Patients moving their own visits", "detail": "Today they call the front desk. Online needs a link in the reminder and a way for patients to prove who they are."},
-        {"title": "Reminder timing", "detail": "Assumed one reminder, 24 hours before. Some clinics may want 48 hours, or a second one on the morning of the visit."},
-        {"title": "Clinicians at two clinics", "detail": "Assumed each clinician works at one clinic. If not, Availability needs hours per clinic."}
+        {"title": "Patients moving their own visits"},
+        {"title": "Reminder timing"}
       ]
     }
   ]

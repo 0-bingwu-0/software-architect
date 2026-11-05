@@ -41,14 +41,14 @@ It leaves out payments, insurance, video visits, patient accounts, and clinics w
 
 ### Booking
 
-* **Does:** Creates, moves, and cancels visits. Rejects a visit that overlaps another one for the same clinician, or falls outside the clinician's open hours. Lists free slots and a clinician's visits for a day. Announces every change as a booking event.
+* **Does:** Creates, moves, and cancels visits. Rejects a visit that overlaps another one for the same clinician, with a database constraint catching two made at once, or falls outside the clinician's open hours. Lists free slots and a clinician's visits for a day. Announces every change as a booking event.
 * **Owns:** visits.
 * **Depends on:** `OpenHours`, `VisitStore`, `Clock`.
 * **Code:** `src/booking/`
 
 ### Availability
 
-* **Does:** Keeps each clinic's clinicians, with their weekly hours and time off, and works out which hours are open on a given day.
+* **Does:** Keeps each clinic's clinicians, with their weekly hours and time off, and works out which hours are open on a given day, turning weekly hours kept in the clinic's local time into UTC.
 * **Owns:** clinicians, weekly hours, and time off.
 * **Depends on:** `ScheduleStore`.
 * **Code:** `src/availability/`
@@ -234,20 +234,35 @@ interface Clock {
 
 ## Decisions
 
-* **One service, one folder per module:** It's the house rule, and two engineers can't run more. Modules call each other only through the interfaces above, so one could become its own service later without changing its callers. Not chosen: separate services for booking and reminders.
-* **Each module owns its store interface:** `src/db/` implements `VisitStore`, `ScheduleStore`, `PatientStore`, and `ReminderStore` with Prisma. Business logic never imports Prisma, and tests use in-memory stores. Not chosen: one shared repository layer.
-* **Double bookings are stopped twice:** Booking checks for overlaps, and an exclusion constraint on clinician and time range in PostgreSQL catches two bookings made at the same moment. Not chosen: a lock per clinician.
-* **Times are stored in UTC:** Weekly hours are kept in the clinic's local time and turned into UTC for each day, so a daylight saving change doesn't shift anyone's hours. Not chosen: storing local times.
-* **Booking announces events instead of calling Reminders:** Booking stays the same when something new reacts to visits, like a waitlist. Events are handled in the same process, after the visit is saved. If a handler fails, the visit still stands and the error is logged. Not chosen: Booking calling Reminders directly.
-* **Reminders run from a table, not a queue:** About 6,000 reminders a day fit in one PostgreSQL table, checked every minute. Moving a visit is one row update, and `takeDue` locks the rows it takes, so two running copies never send the same reminder. Not chosen: a queue like SQS. It's one more thing to run, and a queued message can't be moved when the visit moves.
-* **One channel per provider, behind `MessageChannel`:** Clinics have already asked about WhatsApp. Adding it means one new channel and no change to Reminders. Not chosen: calling Twilio and Postmark from Reminders.
-* **Availability is its own module:** The front desk changes hours and blocks time off every week, while booking rules rarely change. Booking only reads open hours, through `OpenHours`. Not chosen: keeping hours inside Booking, as in v2.
+### One service, one folder per module
+
+It's the house rule, and two engineers can't run more. Modules call each other only through the interfaces above, so one could become its own service later without changing its callers. Not chosen: separate services for booking and reminders.
+
+### Each module owns its store interface
+
+`src/db/` implements `VisitStore`, `ScheduleStore`, `PatientStore`, and `ReminderStore` with Prisma. Business logic never imports Prisma, and tests use in-memory stores. Not chosen: one shared repository layer.
+
+### Booking announces events instead of calling Reminders
+
+Booking stays the same when something new reacts to visits, like a waitlist. Events are handled in the same process, after the visit is saved. If a handler fails, the visit still stands and the error is logged. Not chosen: Booking calling Reminders directly.
+
+### Reminders run from a table, not a queue
+
+About 6,000 reminders a day fit in one PostgreSQL table, checked every minute. Moving a visit is one row update, and `takeDue` locks the rows it takes, so two running copies never send the same reminder. Not chosen: a queue like SQS. It's one more thing to run, and a queued message can't be moved when the visit moves.
+
+### Availability is its own module
+
+The front desk changes hours and blocks time off every week, while booking rules rarely change. Booking only reads open hours, through `OpenHours`. Not chosen: keeping hours inside Booking, as in v2.
 
 ## Open questions
 
-* **Patients moving their own visits:** Today they call the front desk. Doing it online needs a link in the reminder and a way for patients to prove who they are, so it waits until clinics ask for it.
-* **Reminder timing:** Assumed one reminder, 24 hours before, for every clinic. Some clinics may want 48 hours, or a second one on the morning of the visit.
-* **Clinicians at two clinics:** Assumed each clinician works at one clinic. If not, Availability needs hours per clinic.
+### Patients moving their own visits
+
+Today they call the front desk. Doing it online needs a link in the reminder and a way for patients to prove who they are, so it waits until clinics ask for it.
+
+### Reminder timing
+
+Assumed one reminder, 24 hours before, for every clinic. Some clinics may want 48 hours, or a second one on the morning of the visit.
 
 ## Versions
 
