@@ -90,19 +90,13 @@
 
   .page { max-width: 1400px; margin: 0 auto; padding: 0 72px 120px; }
   .page-icon { display: block; width: 104px; height: 104px; margin: 44px 0 0 -4px; font-size: 88px; line-height: 104px; user-select: none; }
-  .title { margin: 18px 0 14px; font-size: 40px; font-weight: 700; line-height: 1.2; }
-  /* Header: name and goal on the left; on the right, a sticky note with what to say in Chat, pinned like the notes in the banner */
-  .head { display: grid; grid-template-columns: minmax(0, 66fr) minmax(0, 34fr); gap: 40px; align-items: start; margin: 0 0 30px; }
-  .head-main { min-width: 0; }
+  .title { margin: 18px 0 10px; font-size: 40px; font-weight: 700; line-height: 1.2; }
+  /* Header: the system's name, its tabs when there are several, what to say in Chat on one line, then the goal */
+  .head { margin: 0 0 30px; }
   .callout.goal { display: inline-flex; max-width: 100%; }
-  .systems { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0 14px; }
-  .note { position: relative; margin-top: -4px; padding: 14px 16px 12px; border-radius: 4px; background: #fffaf0; color: #3d3a32; box-shadow: 0 0 0 1px rgba(60, 50, 20, 0.08), 0 6px 16px rgba(60, 50, 20, 0.1); }
-  .note::before { content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; border-radius: 50%; background: #d9686a; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transform: translateX(-50%); }
-  .note h3 { margin: 0 0 6px; color: rgba(55, 53, 47, 0.65); font-size: 12px; font-weight: 600; }
-  .note p { margin: 0; font-size: 14px; line-height: 1.4; }
-  .note p + p { margin-top: 6px; }
-  .note strong { font-weight: 600; }
-  .note span { color: rgba(55, 53, 47, 0.65); }
+  .systems { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; }
+  .say { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+  .say b { height: 24px; padding: 0 8px; border-radius: 4px; background: var(--hover); color: var(--text); font-weight: 500; line-height: 24px; white-space: nowrap; }
   .columns { display: grid; grid-template-columns: minmax(0, 66fr) minmax(0, 34fr); gap: 40px; align-items: start; }
   .col { min-width: 0; }
   .section + .section { margin-top: 44px; }
@@ -192,7 +186,7 @@
   .vtag { flex: none; min-width: 28px; justify-content: center; font-variant-numeric: tabular-nums; }
 
   @media (max-width: 1040px) {
-    .columns, .head { grid-template-columns: minmax(0, 1fr); }
+    .columns { grid-template-columns: minmax(0, 1fr); }
     .page { padding: 0 40px 96px; }
   }
   @media (max-width: 640px) {
@@ -216,12 +210,10 @@
   <main class="page">
     <div class="page-icon" role="img" aria-label="Triangular ruler">📐</div>
     <div class="head">
-      <div class="head-main">
-        <h1 class="title" id="name"></h1>
-        <div class="systems" id="systems" role="tablist" aria-label="Systems" hidden></div>
-        <div class="callout goal" id="goal"></div>
-      </div>
-      <aside class="note" id="start" aria-label="What to say in Chat"></aside>
+      <h1 class="title" id="name"></h1>
+      <div class="systems" id="systems" role="tablist" aria-label="Systems" hidden></div>
+      <p class="say" id="start"></p>
+      <div class="callout goal" id="goal"></div>
     </div>
 
     <div class="columns">
@@ -345,12 +337,8 @@
     $("#systems").hidden = data.systems.length < 2;
     $("#systems").innerHTML = data.systems.map((x) => `<button type="button" class="tab" role="tab" data-system="${esc(x.id)}" aria-selected="${x.id === systemId}">${esc(x.name)}</button>`).join("");
     // "Set me up" only while the template's example is still here
-    const steps = [
-      data.example && ["Set me up.", "Swap this example for your own stack and system."],
-      ["Design a new system.", "Say what it does and who uses it."],
-      ["What if we add …?", "Talk it through; what you decide goes into the design."],
-    ].filter(Boolean);
-    $("#start").innerHTML = `<h3>Say in Chat</h3>${steps.map(([say, what]) => `<p><strong>“${esc(say)}”</strong> <span>${esc(what)}</span></p>`).join("")}`;
+    const steps = [data.example && "Set me up.", "Design a system that …", "What if we add …?", "Check the design.", "Show me what changed."].filter(Boolean);
+    $("#start").innerHTML = `<span aria-hidden="true">💬</span><span>Say in Chat</span>${steps.map((say) => `<b>“${esc(say)}”</b>`).join("")}`;
     renderArchitecture();
     renderVersions();
     renderList("#decisions", s?.decisions || [], (d) => d.why, "None yet.");
